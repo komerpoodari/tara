@@ -1,0 +1,18 @@
+.adk
+.env
+.git
+__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.env
+
+
+# GCP / Vertex AI Specific
+.gcloud/
+.config
+
