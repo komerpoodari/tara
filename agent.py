@@ -1,11 +1,8 @@
 import json
 from google.adk.agents import Agent
-from google.adk.tools import google_search
+
 md_file_path = './tara/tara_report.md'
 json_file_path = './tara/tara_output.json'
-
-
-
 
 def save_tara_artifacts(json_payload: str) -> str:
     """Saves the TARA JSON output to a file and generates a readable Markdown report."""
@@ -19,7 +16,7 @@ def save_tara_artifacts(json_payload: str) -> str:
             
         # 3. Generate and save the Markdown report for human review
         with open(md_file_path, 'w') as md:
-            md.write("# ISO/SAE 21434 TARA Report\n\n")
+            md.write("# ISO/SAE 21434 TARA & Requirements Report\n\n")
             
             md.write("## 1. Target of Evaluation (BoM)\n")
             for item in data.get('bom', []):
@@ -51,6 +48,14 @@ def save_tara_artifacts(json_payload: str) -> str:
                 md.write(f"**Asset:** {asset}\n")
                 md.write(f"> {goal}\n\n")
 
+            # --- NEW SECTION: Security Requirements ---
+            md.write("## 4. Security Requirements (Engineering Controls)\n")
+            for sr in data.get('security_requirements', []):
+                related_goal = sr.get('related_goal', '')
+                req = sr.get('requirement', '')
+                md.write(f"**Maps to Goal:** {related_goal}\n")
+                md.write(f"* **Control:** {req}\n\n")
+
         return "SUCCESS: tara_output.json and tara_report.md have been successfully written to the local disk."
     except Exception as e:
         return f"FAILED to save artifacts: {str(e)}"
@@ -58,24 +63,28 @@ def save_tara_artifacts(json_payload: str) -> str:
 root_agent = Agent(
     name='tara_analyst',
     model='gemini-2.5-flash',
-    description="Generates ISO/SAE 21434 compliant Threat Analysis and Risk Assessments (TARA).",
+    description="Generates ISO/SAE 21434 compliant Threat Analysis and Risk Assessments (TARA) and Security Requirements.",
     instruction="""
 You are an expert Automotive Cybersecurity Analyst holding a CISSP certification.
-Your task is to analyze automotive E/E architecture inputs and generate a TARA strictly adhering to ISO/SAE 21434.
+Your task is to visually analyze uploaded automotive E/E architecture block diagrams and generate a TARA strictly adhering to ISO/SAE 21434.
 
 ### 🔍 TASK FLOW
 
-1. **Asset Identification (BoM & TOE)**
-   - Extract physical components and logical interfaces to establish the Target of Evaluation (TOE).
+1. **Visual Asset Identification (BoM & TOE)**
+   - Thoroughly examine the uploaded image or document.
+   - Visually extract all physical components (e.g., specific microcontrollers, transceivers, sensors) and logical data buses (e.g., CAN, LIN, Automotive Ethernet) to establish the Target of Evaluation (TOE).
+   - If a component has a specific part number visible (e.g., "TCAN4550" or "S32K"), capture it.
 2. **Damage Scenarios**
    - Evaluate CIA impact across SFOP (Severe, Major, Moderate, Negligible).
 3. **Threat Scenarios & Attack Paths**
-   - Map threats and determine Attack Feasibility (High, Medium, Low, Very Low). 
+   - Map threats based on the visually identified architecture and determine Attack Feasibility (High, Medium, Low, Very Low). 
 4. **Risk Determination**
    - Assign Risk Value (1 to 5).
 5. **Security Goals**
    - Formulate goals for High Risk (4 or 5) scenarios.
-6. **Save Artifacts (CRITICAL STEP)**
+6. **Security Requirements (Engineering Controls)**
+   - For each Security Goal, define specific, testable technical requirements (e.g., MACs, TLS, UWB). 
+7. **Save Artifacts (CRITICAL STEP)**
    - Once you have compiled your analysis, you MUST call the `save_tara_artifacts` tool. 
    - Pass your entire structured JSON response as the `json_payload` string argument.
 
@@ -91,10 +100,13 @@ Construct your data in this exact JSON structure to pass to the tool:
   ],
   "security_goals": [
     { "related_asset": "...", "goal": "..." }
+  ],
+  "security_requirements": [
+    { "related_goal": "...", "requirement": "..." }
   ]
 }
 
-After calling the tool, reply to the user in the chat interface summarizing the top risks found and confirming the files were saved.
+After calling the tool, reply to the user in the chat interface summarizing the hardware found in the diagram and the top risks.
     """,
-    tools=[save_tara_artifacts], # Notice the new tool added here
+    tools=[save_tara_artifacts],
 )
