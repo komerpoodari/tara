@@ -1,0 +1,112 @@
+{
+  "bom": [
+    "Key Fob Microcontroller: NXP PCF7953",
+    "Key Fob LF Antenna: 125 kHz 3D",
+    "Key Fob UHF Transmitter: 433 MHz",
+    "Key Fob Cryptography: AES-128",
+    "Key Fob Power: CR2032 Battery",
+    "SKM Microcontroller: NXP S32K144",
+    "SKM LF Driver: 125 kHz transmission antenna",
+    "SKM UHF Receiver: 433 MHz",
+    "SKM Network Interface: Texas Instruments TCAN4550",
+    "Vehicle CAN Bus",
+    "Body Control Module (BCM)",
+    "Engine Control Unit (ECU)"
+  ],
+  "tara_matrix": [
+    {
+      "asset": "Key Fob AES-128 Key (Hardcoded)",
+      "cybersecurity_property": "Confidentiality",
+      "damage_scenario": "Unauthorized extraction of the AES-128 key, allowing cloning of the key fob or calculation of valid responses.",
+      "impact_sfop": "Severe",
+      "threat_scenario": "Side-channel attack (e.g., power analysis, electromagnetic analysis) on the Key Fob's NXP PCF7953 MCU to extract the hardcoded AES-128 key.",
+      "attack_feasibility": "Medium",
+      "risk_value": 4
+    },
+    {
+      "asset": "Key Fob AES-128 Key (Hardcoded)",
+      "cybersecurity_property": "Integrity",
+      "damage_scenario": "Tampering with the AES-128 key or cryptographic calculations within the Key Fob firmware.",
+      "impact_sfop": "Severe",
+      "threat_scenario": "Physical tampering/reverse engineering of Key Fob to modify firmware or key storage.",
+      "attack_feasibility": "Medium",
+      "risk_value": 4
+    },
+    {
+      "asset": "SKM LF Driver / Key Fob LF Antenna (LF Communication)",
+      "cybersecurity_property": "Confidentiality, Integrity",
+      "damage_scenario": "Eavesdropping on LF challenge to gain information about cryptographic process or vehicle status.",
+      "impact_sfop": "Moderate",
+      "threat_scenario": "Attacker uses an LF receiver to capture the 125 kHz challenge signal.",
+      "attack_feasibility": "Medium",
+      "risk_value": 3
+    },
+    {
+      "asset": "Key Fob UHF Transmitter / SKM UHF Receiver (UHF Communication)",
+      "cybersecurity_property": "Integrity, Authenticity",
+      "damage_scenario": "Relay attack where LF challenge and UHF response are relayed over long distances.",
+      "impact_sfop": "Severe",
+      "threat_scenario": "Attacker uses two devices to relay the LF challenge to the key fob and the UHF response back to the vehicle, extending the operational range.",
+      "attack_feasibility": "High",
+      "risk_value": 5
+    },
+    {
+      "asset": "Key Fob UHF Transmitter / SKM UHF Receiver (UHF Communication)",
+      "cybersecurity_property": "Availability",
+      "damage_scenario": "Jamming of 433 MHz UHF frequency, preventing Key Fob communication and legitimate access/start.",
+      "impact_sfop": "Moderate",
+      "threat_scenario": "RF jamming using a cheap jammer.",
+      "attack_feasibility": "High",
+      "risk_value": 3
+    },
+    {
+      "asset": "SKM Microcontroller (NXP S32K144)",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "Tampering with SKM firmware, allowing unauthorized validation bypass or control of vehicle functions.",
+      "impact_sfop": "Severe",
+      "threat_scenario": "Physical access and flashing malicious firmware onto the SKM MCU.",
+      "attack_feasibility": "Medium",
+      "risk_value": 4
+    },
+    {
+      "asset": "Vehicle CAN Bus / BCM / ECU (CAN Frames for Unlock/Start)",
+      "cybersecurity_property": "Integrity, Authenticity",
+      "damage_scenario": "Spoofing of the unencrypted CAN frame to the BCM to unlock doors or enable engine start.",
+      "impact_sfop": "Severe",
+      "threat_scenario": "Attacker gains physical access to the Vehicle CAN Bus (e.g., via OBD-II port) and injects crafted CAN messages to unlock doors or enable engine start.",
+      "attack_feasibility": "Medium",
+      "risk_value": 4
+    },
+    {
+      "asset": "Key Fob (CR2032 Battery)",
+      "cybersecurity_property": "Availability",
+      "damage_scenario": "Battery depletion, rendering the key fob inoperable.",
+      "impact_sfop": "Negligible",
+      "threat_scenario": "Normal wear and tear, or user negligence in replacement.",
+      "attack_feasibility": "Very Low",
+      "risk_value": 1
+    }
+  ],
+  "security_goals": [
+    {
+      "related_asset": "Key Fob AES-128 Key",
+      "goal": "The AES-128 key stored in the Key Fob microcontroller shall be protected against unauthorized extraction via side-channel attacks to a very low level of feasibility."
+    },
+    {
+      "related_asset": "Key Fob AES-128 Key",
+      "goal": "The Key Fob firmware and cryptographic calculations shall be protected against unauthorized modification and physical tampering to ensure integrity."
+    },
+    {
+      "related_asset": "Key Fob UHF Transmitter / SKM UHF Receiver (UHF Communication)",
+      "goal": "The PEPS system shall detect and prevent relay attacks to an acceptable level, preventing unauthorized vehicle access and start."
+    },
+    {
+      "related_asset": "SKM Microcontroller",
+      "goal": "The SKM microcontroller's firmware shall be protected against unauthorized modification or flashing to maintain system integrity and prevent bypass of security functions."
+    },
+    {
+      "related_asset": "Vehicle CAN Bus / BCM / ECU (CAN Frames)",
+      "goal": "The CAN frames used for critical functions like unlocking doors and enabling engine start shall be protected against spoofing and unauthorized injection to ensure authenticity and integrity."
+    }
+  ]
+}
