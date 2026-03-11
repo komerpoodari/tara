@@ -1,103 +1,67 @@
 # ISO/SAE 21434 TARA & Requirements Report
 
 ## 1. Target of Evaluation (BoM)
-* MCU/MPU (NXP S32G2 Processors, NXP MPC574xB-C-G)
-* PMIC and CAN/LIN SBC (NXP VR5510)
-* CAN Transceiver
-* LIN Transceiver
-* FlexRay Transceiver
-* Ethernet PHY (NXP TJA1100HN, NXP TJA1102/TJA1102A)
-* Ethernet Switch (NXP SJA1105EL, NXP SJA1105TEL, NXP SJA1105PEL/QEL/REL/SEL Series, NXP SJA1110)
-* CAN Networks (Bus)
-* LIN Networks (Bus)
-* FlexRay Network (Bus)
-* Ethernet Network(s) (Bus)
-* VBAT (Power Supply)
+* Smart Fob
+* Smart Fob - NFC Transceiver (NCJ37x)
+* Smart Fob - UWB/BLE Transceiver (NCJ29D6)
+* Smart Fob - BLE/MCU (KW4x)
+* Vehicle - Outside - UWB/BLE Transceiver (NCJ29D6)
+* Vehicle - Outside - NFC Transceiver + Host MCU (NCF332x + host MCU)
+* Vehicle - Inside - UWB/BLE Transceiver (NCJ29D6 + KW4x)
+* Vehicle - Inside - Access ECU
+* Vehicle - Inside - Access ECU - BLE/MCU (KW4x)
+* Vehicle - Inside - Access ECU - Secure Element (NCJ38x)
+* Vehicle - Inside - NFC Transceiver + Host MCU (NCF332x + host MCU)
+* Diagnostic Laptop
+* Communication Channel - BLE
+* Communication Channel - UWB
+* Communication Channel - NFC
+* Communication Channel - SPI
+* Communication Channel - CAN FD
+* Communication Channel - UART/USB
 
 ## 2. Threat Analysis & Risk Matrix
-| Asset | CIA | Damage Scenario | Impact | Threat Scenario | Feasibility | Risk Value |
-|---|---|---|---|---|---|---|
-| MCU/MPU | Integrity | Malicious firmware update causing incorrect routing or control commands, leading to loss of vehicle control or unexpected behavior. | Severe | Remote attacker compromises an attached ECU or the OTA update mechanism, flashing unauthorized/malicious firmware to the gateway MCU. | High | **5** 🚨 |
-| MCU/MPU | Confidentiality | Unauthorized access to sensitive vehicle data (e.g., driver behavior, location, diagnostic data) processed or stored by the gateway. | Major | Insider threat or remote attacker exploiting vulnerabilities in gateway software to exfiltrate data. | Medium | **4** 🚨 |
-| MCU/MPU | Availability | Denial of Service (DoS) attack on the gateway, preventing critical communication between vehicle domains. | Severe | Malicious messages flooding the gateway interfaces or exploiting software vulnerabilities to crash the MCU/MPU. | High | **5** 🚨 |
-| CAN Networks | Integrity | Injection of malicious CAN messages (e.g., fake speed signals, brake commands) leading to unintended vehicle behavior. | Severe | Attacker with physical access or through a compromised ECU on the CAN bus injects forged messages. | High | **5** 🚨 |
-| LIN Networks | Integrity | Manipulation of LIN messages controlling less critical functions (e.g., window control, climate). | Moderate | Attacker with physical access or through a compromised ECU on the LIN bus injects forged messages. | Medium | 3 |
-| Ethernet Network(s) | Integrity | Manipulation or spoofing of Ethernet frames, leading to incorrect data exchange for safety-critical functions (e.g., ADAS sensor data, vehicle control commands). | Severe | Attacker gains access to the Ethernet network and injects malicious packets, or performs ARP spoofing/MAC spoofing. | High | **5** 🚨 |
-| Ethernet Network(s) | Confidentiality | Eavesdropping on unencrypted vehicle data transmitted over Automotive Ethernet. | Major | Attacker with network access monitors traffic. | Medium | **4** 🚨 |
-| Ethernet Switch (SJA1105/SJA1110) | Integrity/Availability | Manipulation of switch configuration (e.g., VLANs, filtering rules) or flooding, leading to misrouting of critical data or network DoS. | Severe | Attacker exploits vulnerabilities in switch management interface or sends malformed packets to disrupt its operation. | Medium | **4** 🚨 |
-| PMIC and CAN/LIN SBC (VR5510) | Availability | Malicious manipulation of power supply settings or fault injection, leading to system instability or shutdown. | Severe | Attacker with physical access or via compromised MCU gains control of SBC features and disrupts power management. | Medium | **4** 🚨 |
+| Asset | CIA | Damage Scenario | Impact | Impact Rationale | Threat Scenario | Feasibility | Feasibility Rationale | Risk |
+|---|---|---|---|---|---|---|---|---|
+| Smart Fob | Confidentiality, Integrity, Availability | Unauthorized vehicle unlock/start due to compromise of Smart Fob's cryptographic keys. | Severe | *Safety: Loss of control over the vehicle, potential for theft leading to unsafe situations if driven by an unauthorized person, potentially causing accidents. Severe. Financial: Vehicle theft, loss of personal belongings. Severe. Operational: Vehicle unavailable for owner's use. Severe. Privacy: Potential for tracking vehicle movements if stolen, or access to personal data inside the vehicle. Major. Overall Impact: Severe.* | Side-channel attack on Smart Fob to extract cryptographic keys. | Medium | *Requires physical access to the Smart Fob, specialized equipment (e.g., oscilloscope, power analyzer), and expertise. However, once a method is found, it can be replicated. Vulnerabilities in crypto implementations are not uncommon.* | **4** 🚨 |
+| Smart Fob | Availability | Denial of service (DoS) for keyless entry functionality, preventing legitimate owner from accessing the vehicle. | Major | *Safety: Inconvenience, but not direct safety threat unless in an emergency. Negligible. Financial: Potential cost of alternative transport, lost time. Moderate. Operational: Inability to use the vehicle as intended. Major. Privacy: None. Negligible. Overall Impact: Major.* | Jamming of BLE/UWB signals near the vehicle/fob. | High | *Readily available equipment (SDRs, jammers) and relatively easy to implement. Broadcast jamming does not require specific targeting.* | **4** 🚨 |
+| BLE/UWB Communication Channel | Confidentiality, Integrity, Authenticity | Relay attack, extending the effective range of the Smart Fob to unlock/start the vehicle from a distance. | Severe | *Safety: Unauthorized vehicle unlock/start poses a severe risk of vehicle theft, leading to unsafe situations if operated by unauthorized persons. Severe. Financial: Vehicle theft, loss of personal belongings. Severe. Operational: Vehicle unavailable for owner's use. Severe. Privacy: Potential for tracking vehicle movements if stolen, or access to personal data inside the vehicle. Major. Overall Impact: Severe.* | Relay attack on BLE/UWB signals. | Medium | *Known attack vector for keyless entry systems. Requires two attackers with specialized relay equipment. The document claims a 'robust, relay-resistant solution,' which implies mitigations are in place, potentially increasing the effort required but not eliminating the threat entirely. Off-the-shelf solutions exist.* | **4** 🚨 |
+| BLE/UWB Communication Channel | Integrity, Authenticity | Replay attack of legitimate BLE/UWB messages to gain unauthorized access. | Severe | *Safety: Similar to relay attack, unauthorized vehicle access can lead to theft and unsafe operation. Severe. Financial: Vehicle theft. Severe. Operational: Vehicle unavailable. Severe. Privacy: Potential for tracking vehicle movements. Major. Overall Impact: Severe.* | Interception and replay of BLE/UWB communication. | Medium | *Requires signal interception and retransmission capability. While countermeasures like rolling codes and challenge-response are standard for CCC Digital Key 4.0, implementation flaws can still create vulnerabilities. Specialized equipment for signal capture and replay is required.* | **4** 🚨 |
+| Access ECU | Integrity, Availability, Confidentiality | Unauthorized modification of vehicle access control logic within the Access ECU. | Severe | *Safety: Compromise of safety functions linked to vehicle access/start (e.g., allowing engine start without proper authentication). Could lead to unsafe operation or theft. Severe. Financial: Vehicle theft, repair costs. Severe. Operational: Vehicle rendered inoperable or controlled by unauthorized parties. Severe. Privacy: Potential for logging/tracking user access or other data. Major. Overall Impact: Severe.* | Flashing malicious firmware via UART/USB (Laptop interface) or CAN FD. | Medium | *Requires physical access to the vehicle's diagnostic port or internal CAN bus, and potentially specialized tools or compromised diagnostic software. If the UART/USB port is unprotected or has weak authentication, feasibility increases. Expertise in ECU programming is required.* | **4** 🚨 |
+| Vehicle - Inside - Access ECU - Secure Element (NCJ38x) | Confidentiality, Integrity, Authenticity | Extraction of cryptographic keys or secrets stored in the Secure Element. | Severe | *Safety: Direct compromise of the root of trust, leading to unauthorized vehicle access/start, potentially endangering occupants or other road users. Severe. Financial: Vehicle theft, complete financial loss. Severe. Operational: Complete system bypass and compromise of the entire digital key system. Severe. Privacy: If personal identifiers or tracking data are stored, they could be compromised. Major. Overall Impact: Severe.* | Invasive or semi-invasive physical attack (e.g., micro-probing, fault injection) on the Secure Element. | Low | *Requires highly specialized and expensive equipment, significant expertise in chip reverse engineering and fault injection techniques, and physical access to the chip itself. This is a very complex and costly attack, typically performed by well-funded organizations.* | 3 |
 
 ## 3. Security Goals (Risk Treatment)
-**Asset:** MCU/MPU
-> Ensure the integrity and authenticity of all software and configuration data loaded and executed on the MCU/MPU.
+**Asset:** Smart Fob, BLE/UWB Communication Channel, Access ECU
+> Prevent unauthorized vehicle access and start through cryptographic key compromise or communication channel manipulation.
 
-**Asset:** MCU/MPU
-> Prevent unauthorized access to sensitive data stored or processed by the MCU/MPU.
+**Asset:** Smart Fob, BLE/UWB Communication Channel
+> Ensure availability of the keyless entry functionality for legitimate users.
 
-**Asset:** MCU/MPU
-> Ensure the continuous availability and proper functioning of the MCU/MPU and its critical communication services.
-
-**Asset:** CAN Networks
-> Prevent the injection, modification, or replay of unauthorized messages on the CAN networks.
-
-**Asset:** Ethernet Network(s)
-> Prevent the injection, modification, or replay of unauthorized messages on the Ethernet networks.
-
-**Asset:** Ethernet Network(s)
-> Protect the confidentiality of sensitive data transmitted over the Ethernet networks.
-
-**Asset:** Ethernet Switch (SJA1105/SJA1110)
-> Prevent unauthorized configuration changes or disruption of the Ethernet switch's operation.
-
-**Asset:** PMIC and CAN/LIN SBC (VR5510)
-> Prevent unauthorized manipulation of power management and bus control functions of the PMIC/SBC.
+**Asset:** Access ECU
+> Protect the integrity and authenticity of vehicle access control logic.
 
 ## 4. Security Requirements (Engineering Controls)
-**Maps to Goal:** Ensure the integrity and authenticity of all software and configuration data loaded and executed on the MCU/MPU.
-* **Control:** Implement secure boot and authenticated firmware updates using cryptographic signatures (e.g., RSA or ECC) to verify software integrity before execution.
+**Maps to Goal:** Prevent unauthorized vehicle access and start through cryptographic key compromise or communication channel manipulation.
+* **Control:** The Smart Fob shall implement robust hardware-backed cryptographic key storage and operations, resilient to side-channel attacks.
+  * **Rationale:** *This directly mitigates the threat of cryptographic key extraction (Threat Scenario 1) by making side-channel attacks significantly harder and less feasible, thus protecting against unauthorized access, even with physical access to the fob.*
 
-**Maps to Goal:** Ensure the integrity and authenticity of all software and configuration data loaded and executed on the MCU/MPU.
-* **Control:** Implement a hardware security module (HSM) or secure element for cryptographic operations and secure key storage.
+**Maps to Goal:** Prevent unauthorized vehicle access and start through cryptographic key compromise or communication channel manipulation.
+* **Control:** The UWB and BLE communication channels shall employ secure ranging protocols (e.g., using time-of-flight measurements resistant to relay attacks) as specified by CCC Digital Key Release 4.0, validated through robust testing.
+  * **Rationale:** *This directly addresses and mitigates relay attacks (Threat Scenario 3) by ensuring that the system can accurately determine the physical proximity of the Smart Fob, preventing range extension and subsequent unauthorized vehicle access.*
 
-**Maps to Goal:** Prevent unauthorized access to sensitive data stored or processed by the MCU/MPU.
-* **Control:** Enforce strict access control mechanisms (e.g., memory protection unit, privilege levels) within the MCU/MPU to isolate sensitive data and code.
+**Maps to Goal:** Prevent unauthorized vehicle access and start through cryptographic key compromise or communication channel manipulation.
+* **Control:** All wireless communication (BLE, UWB, NFC) between the Smart Fob and the vehicle shall utilize mutual authentication, strong session key establishment, and rolling codes with a robust anti-replay mechanism to prevent replay attacks and impersonation.
+  * **Rationale:** *This mitigates replay attacks (Threat Scenario 4) by ensuring that each communication is unique, authenticated by both parties, and has a limited validity period, making previously recorded legitimate messages unusable for unauthorized access.*
 
-**Maps to Goal:** Prevent unauthorized access to sensitive data stored or processed by the MCU/MPU.
-* **Control:** Encrypt sensitive data at rest and in transit within the gateway.
+**Maps to Goal:** Ensure availability of the keyless entry functionality for legitimate users.
+* **Control:** The system shall implement redundant communication paths or fallback mechanisms (e.g., NFC-based access using NCJ37x and NCF332x) for vehicle access in case of jamming or failure of primary communication channels (BLE/UWB).
+  * **Rationale:** *This mitigates the impact of jamming attacks (Threat Scenario 2) by providing an alternative, potentially more robust or short-range, method for the legitimate user to access the vehicle, thereby maintaining availability.*
 
-**Maps to Goal:** Ensure the continuous availability and proper functioning of the MCU/MPU and its critical communication services.
-* **Control:** Implement robust input validation and message filtering mechanisms on all network interfaces to prevent malformed or malicious messages from causing DoS.
+**Maps to Goal:** Protect the integrity and authenticity of vehicle access control logic.
+* **Control:** The Access ECU firmware shall be secured against unauthorized modification through secure boot, continuous firmware integrity checks, and authenticated over-the-air (OTA) or wired updates using strong cryptographic signatures.
+  * **Rationale:** *This directly mitigates the threat of malicious firmware flashing (Threat Scenario 5) by ensuring that only authorized and cryptographically verified firmware can be executed or updated on the ECU, protecting the integrity of the access control logic and preventing unauthorized vehicle operation.*
 
-**Maps to Goal:** Ensure the continuous availability and proper functioning of the MCU/MPU and its critical communication services.
-* **Control:** Incorporate watchdog timers and fault detection/recovery mechanisms to ensure system resilience.
-
-**Maps to Goal:** Prevent the injection, modification, or replay of unauthorized messages on the CAN networks.
-* **Control:** Implement in-vehicle network intrusion detection/prevention systems (IDS/IPS) capable of anomaly detection and filtering on CAN messages.
-
-**Maps to Goal:** Prevent the injection, modification, or replay of unauthorized messages on the CAN networks.
-* **Control:** Employ Message Authentication Codes (MACs) or cryptographic checksums for critical CAN messages, where feasible, to verify authenticity and integrity.
-
-**Maps to Goal:** Prevent the injection, modification, or replay of unauthorized messages on the Ethernet networks.
-* **Control:** Implement secure onboard communication protocols (e.g., MACsec, TLS over IPsec) for all critical data transmitted over Automotive Ethernet.
-
-**Maps to Goal:** Prevent the injection, modification, or replay of unauthorized messages on the Ethernet networks.
-* **Control:** Employ packet filtering and firewall rules at the gateway's Ethernet interfaces to restrict unauthorized traffic.
-
-**Maps to Goal:** Protect the confidentiality of sensitive data transmitted over the Ethernet networks.
-* **Control:** Encrypt all sensitive data transmitted over Automotive Ethernet using strong cryptographic algorithms (e.g., AES-256).
-
-**Maps to Goal:** Protect the confidentiality of sensitive data transmitted over the Ethernet networks.
-* **Control:** Implement secure key management and exchange protocols for encryption keys.
-
-**Maps to Goal:** Prevent unauthorized configuration changes or disruption of the Ethernet switch's operation.
-* **Control:** Securely configure the Ethernet switch with robust access controls for its management interface, preventing unauthorized modification of VLANs, QoS, or filtering rules.
-
-**Maps to Goal:** Prevent unauthorized configuration changes or disruption of the Ethernet switch's operation.
-* **Control:** Implement port security features (e.g., MAC address filtering) on the Ethernet switch to prevent unauthorized devices from connecting.
-
-**Maps to Goal:** Prevent unauthorized manipulation of power management and bus control functions of the PMIC/SBC.
-* **Control:** Implement hardware-based write protection or access control for critical PMIC/SBC registers and configuration settings, accessible only by authenticated gateway software.
-
-**Maps to Goal:** Prevent unauthorized manipulation of power management and bus control functions of the PMIC/SBC.
-* **Control:** Monitor PMIC/SBC operational parameters for anomalies indicating tampering or malfunction.
+**Maps to Goal:** Protect the integrity and authenticity of vehicle access control logic.
+* **Control:** The UART/USB diagnostic interface shall be protected by strong multifactor authentication and granular authorization mechanisms, requiring specialized credentials or physical security for access to sensitive functions (e.g., firmware updates, configuration changes).
+  * **Rationale:** *This mitigates the threat of unauthorized modification via diagnostic ports (Threat Scenario 5) by strictly restricting access to authorized personnel and tools, preventing arbitrary firmware flashing or configuration changes that could compromise the access control system.*
 
