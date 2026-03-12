@@ -1,128 +1,111 @@
 {
   "bom": [
-    "MCU/MPU (NXP S32G2, MPC574xB-C-G)",
-    "CAN Interface/Transceivers",
-    "LIN Interface/Transceivers",
+    "Gateway Module (physical device)",
+    "MCU/MPU",
+    "PMIC and CAN/LIN SBC",
+    "CAN Interface (transceivers)",
+    "LIN Interface (transceivers)",
     "FlexRay Transceivers",
-    "Ethernet PHY (TJA1100HN, TJA1102/A)",
-    "Ethernet Switch (SJA1105, SJA1110 series)",
-    "PMIC and CAN/LIN SBC (VR5510)",
-    "CAN Networks (Logical Bus)",
-    "LIN Networks (Logical Bus)",
-    "FlexRay Network (Logical Bus)",
-    "Ethernet Network(s) (Logical Bus)",
-    "Data Filtering Functionality",
+    "Ethernet PHY",
+    "Ethernet Switch",
+    "CAN Networks (internal to vehicle)",
+    "LIN Networks (internal to vehicle)",
+    "FlexRay Network (internal to vehicle)",
+    "Ethernet Network(s) (internal to vehicle)",
+    "Data Filtering / Secure Interconnection Functionality",
     "OTA Firmware Update Functionality",
-    "Vehicle Data (on Buses)"
+    "Vehicle Network Data (from powertrain, chassis, safety, body control, infotainment, telematics, ADAS)",
+    "Firmware Images (for OTA updates)",
+    "Configuration Data"
   ],
   "tara_matrix": [
     {
-      "asset": "MCU/MPU",
-      "cybersecurity_property": "Integrity, Availability",
-      "damage_scenario": "Malicious code injected into MCU/MPU firmware, leading to incorrect data routing, manipulation, or denial of service for critical vehicle functions.",
+      "asset": "Gateway Module (MCU/MPU)",
+      "cybersecurity_property": "Integrity, Authenticity, Availability",
+      "damage_scenario": "Compromise of the Gateway's MCU/MPU leading to arbitrary code execution, allowing an attacker to bypass data filtering, inject malicious commands, or take control of vehicle functions.",
       "impact_sfop": "Severe",
-      "impact_rationale": "The MCU/MPU is the central processing unit of the gateway. A compromise of its integrity or availability would directly lead to critical safety functions being bypassed or manipulated (S), rendering the vehicle inoperable (O), and potentially incurring significant repair costs and reputational damage (F). Therefore, the maximum impact is Severe. (Category: S, O)",
-      "threat_scenario": "An attacker exploits a vulnerability in the gateway's network stack or an unpatched vulnerability in the MCU/MPU's bootloader/firmware update mechanism to remotely flash malicious firmware onto the MCU/MPU.",
+      "impact_rationale": "Safety (S) is Severe - The Gateway connects to safety-critical domains (powertrain, chassis, safety, ADAS). Compromise could lead to loss of vehicle control, malfunction of safety features, or unintended vehicle behavior, directly causing accidents or harm. Financial (F) is Severe - Vehicle damage, theft, recall costs, reputational damage. Operational (O) is Severe - Vehicle rendered inoperable, unreliable, or unsafe. Privacy (P) is Moderate - Potential access to aggregated vehicle usage data or location data flowing through the gateway. Therefore, the maximum impact is Severe (S, F, O).",
+      "threat_scenario": "An attacker exploits a vulnerability in the Gateway's software/firmware (e.g., buffer overflow, unhandled input) via connected networks or interfaces to achieve remote code execution on the MCU/MPU.",
       "attack_feasibility": "Medium",
-      "feasibility_rationale": "This attack requires advanced technical skills and potentially remote access to the vehicle's network (e.g., via infotainment, cellular, or diagnostics). Exploiting an MCU/MPU bootloader involves specialized knowledge, but is plausible given time and resources, especially if known vulnerabilities exist or physical access allows for side-channel attacks. The presence of OTA updates indicates a possible remote vector for firmware manipulation. (STRIDE: Tampering, Spoofing)",
+      "feasibility_rationale": "This threat involves Elevation of Privilege, Tampering, Denial of Service, Information Disclosure. It requires knowledge of the Gateway's specific vulnerabilities, potentially complex exploit development. Could originate from external interfaces (e.g., telematics, infotainment, if connected through the gateway) or internal vehicle networks if an adjacent ECU is compromised. This results in Medium feasibility.",
+      "risk_level": 4
+    },
+    {
+      "asset": "Data Filtering / Secure Interconnection Functionality",
+      "cybersecurity_property": "Integrity, Authenticity, Confidentiality, Availability",
+      "damage_scenario": "Bypass of data filtering rules, allowing malicious or malformed data to pass between vehicle networks, leading to compromise of connected ECUs or unintended vehicle behavior.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety (S) is Severe - If malicious data reaches safety-critical ECUs (e.g., powertrain, brakes), it could directly cause accidents or loss of control. Financial (F) is Severe - Vehicle damage, recall costs, legal liabilities. Operational (O) is Severe - Vehicle rendered unreliable, unsafe, or inoperable. Privacy (P) is Moderate - Malicious data flow could exfiltrate sensitive data. Therefore, the maximum impact is Severe (S, F, O).",
+      "threat_scenario": "An attacker crafts malformed packets or exploits a logic flaw in the Gateway's filtering software to circumvent the intended security policies and inject unauthorized messages onto a different network domain.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "This threat involves Tampering (with data flow), Spoofing (of legitimate messages), Elevation of Privilege (to bypass security controls). It requires detailed knowledge of the gateway's filtering logic, network protocols, and potential vulnerabilities. Could be achieved through reverse engineering or exploiting known weaknesses. This often requires access to the network connected to the gateway. This results in Medium feasibility.",
       "risk_level": 4
     },
     {
       "asset": "OTA Firmware Update Functionality",
-      "cybersecurity_property": "Integrity, Authenticity",
-      "damage_scenario": "An attacker delivers a malicious OTA firmware update to ECUs through the gateway, compromising their functionality, safety, or privacy.",
+      "cybersecurity_property": "Integrity, Authenticity, Availability",
+      "damage_scenario": "Injection of malicious or unauthorized firmware updates to the Gateway or other ECUs, leading to full vehicle compromise or bricking of ECUs.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Compromised OTA updates could lead to widespread installation of malicious software across multiple ECUs, directly impacting vehicle safety (S) by causing malfunctions or unintended behavior. This could also lead to severe operational failures (O) and significant financial repercussions for recalls, repairs, and legal liabilities (F). The maximum impact is Severe. (Category: S, O)",
-      "threat_scenario": "An attacker intercepts or spoofs the OTA update server, or gains control over the gateway's update mechanism, to push unauthorized or malicious firmware packages to connected ECUs.",
-      "attack_feasibility": "Medium",
-      "feasibility_rationale": "Exploiting OTA update mechanisms requires sophisticated knowledge of cryptographic protocols, server infrastructure, or specific gateway vulnerabilities. While challenging, known vulnerabilities in update processes have been demonstrated. This could involve network-based attacks (e.g., DNS spoofing, man-in-the-middle) or exploiting vulnerabilities in the gateway's update client. (STRIDE: Spoofing, Tampering)",
-      "risk_level": 4
-    },
-    {
-      "asset": "Data Filtering Functionality",
-      "cybersecurity_property": "Integrity, Availability",
-      "damage_scenario": "The gateway's data filtering rules are bypassed or altered, allowing unauthorized and potentially malicious data packets to traverse between vehicle networks, leading to compromise of connected ECUs.",
-      "impact_sfop": "Major",
-      "impact_rationale": "Bypassing data filtering could enable an attacker to reach and compromise safety-critical ECUs, leading to unintended vehicle behavior (S) or operational failures (O). While not directly manipulating core gateway functions, it facilitates attacks on other critical components. The financial impact (F) could be substantial due to potential repairs and liabilities. The maximum impact is Major. (Category: S, O)",
-      "threat_scenario": "An attacker exploits a vulnerability in the gateway's firewall or filtering software to inject crafted packets that bypass filtering rules, or modifies the rules themselves, allowing unauthorized network traffic.",
+      "impact_rationale": "Safety (S) is Severe - Malicious firmware can take complete control of vehicle functions, disable safety systems, or introduce dangerous behavior, directly leading to accidents or harm. Financial (F) is Severe - Bricked ECUs, vehicle repair/replacement costs, potential for mass recalls, reputational damage. Operational (O) is Severe - Vehicle rendered inoperable, unreliable, or unsafe. Privacy (P) is Moderate - Malicious firmware could exfiltrate data. Therefore, the maximum impact is Severe (S, F, O).",
+      "threat_scenario": "An attacker intercepts the OTA update process or compromises the update server to deliver malicious firmware to the gateway or downstream ECUs. This could also involve exploiting vulnerabilities in the gateway's update client.",
       "attack_feasibility": "High",
-      "feasibility_rationale": "Exploiting network filtering rules often involves sophisticated network penetration techniques, fuzzing, or exploiting known vulnerabilities in the filtering software. If the gateway provides diagnostic access, this could be a vector. Such attacks often require prior knowledge of the network protocols and filtering logic. (STRIDE: Tampering, Bypass of Security Features)",
-      "risk_level": 4
+      "feasibility_rationale": "This threat involves Tampering (with firmware), Spoofing (of update server), Elevation of Privilege (to flash unauthorized code), Denial of Service (bricking). While OTA systems are designed with security, vulnerabilities in the update server, communication channel, or the client-side update verification (e.g., weak crypto, implementation flaws) have been observed in other systems. A sophisticated attacker could target these weaknesses. The gateway is a central point for updates, making this a High feasibility attack due to the potential attack surface.",
+      "risk_level": 5
     },
     {
-      "asset": "Vehicle Data (on Buses)",
-      "cybersecurity_property": "Confidentiality, Integrity, Availability",
-      "damage_scenario": "Sensitive vehicle data (e.g., sensor readings, control commands) is intercepted, modified, or replayed by an attacker on CAN, LIN, FlexRay, or Ethernet buses, causing incorrect vehicle behavior or data leakage.",
+      "asset": "Vehicle Network Data (across CAN, LIN, FlexRay, Ethernet)",
+      "cybersecurity_property": "Confidentiality, Integrity, Authenticity",
+      "damage_scenario": "Eavesdropping on vehicle network data to gather sensitive information (e.g., location, driving habits, personal settings) or unauthorized injection of messages to manipulate vehicle behavior.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Manipulation of critical vehicle data directly impacts safety (S) by causing erroneous control commands or sensor readings, potentially leading to accidents. Data leakage could expose sensitive operational information (P). Disruption of data flow causes severe operational impact (O). Financial implications (F) could be substantial. The maximum impact is Severe. (Category: S, P, O)",
-      "threat_scenario": "An attacker with physical access to the vehicle (e.g., via OBD-II port, exposed wiring) or having compromised an ECU connected to the bus, injects malicious messages, or eavesdrops on communications.",
-      "attack_feasibility": "Low",
-      "feasibility_rationale": "Attacks on in-vehicle buses (CAN, LIN) often require physical access to the network or a compromised ECU connected to the network. While physical access lowers the technical barrier, it is still a specific requirement. Eavesdropping and injection on these buses with physical access is well-documented and relatively straightforward with off-the-shelf tools. Ethernet buses might allow for more complex remote attacks if not properly secured. (STRIDE: Tampering, Spoofing, Information Disclosure)",
-      "risk_level": 3
+      "impact_rationale": "Safety (S) is Severe - Injection of malicious commands onto critical networks (e.g., braking, steering) can cause immediate loss of control or accidents. Financial (F) is Major - Vehicle damage if manipulated, potential for data theft. Operational (O) is Major - Vehicle malfunction, unreliable operation. Privacy (P) is Severe - Comprehensive data about driver behavior, location, and potentially passenger information could be exposed. This impacts a large number of vehicle functions listed (infotainment, telematics, ADAS). Therefore, the maximum impact is Severe (S, P).",
+      "threat_scenario": "An attacker gains access to any of the vehicle networks (CAN, LIN, FlexRay, Ethernet) directly or indirectly (e.g., via a compromised ECU) and intercepts or injects data.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "This threat involves Information Disclosure, Tampering, Spoofing. It requires physical access to the network (e.g., OBD-II port, tapping wires) or exploiting a vulnerability in a connected ECU to gain network access. Reverse engineering of network protocols (e.g., CAN IDs) is often needed. However, general tools for network analysis and injection are common, making this a Medium feasibility attack.",
+      "risk_level": 4
     }
   ],
   "security_goals": [
     {
-      "related_asset": "MCU/MPU",
-      "goal": "The gateway MCU/MPU shall ensure the integrity and authenticity of its software to prevent unauthorized execution of malicious code.",
+      "related_asset": "Gateway Module (MCU/MPU)",
+      "goal": "The Gateway's MCU/MPU and its software shall be protected against unauthorized code execution and malicious control.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Data Filtering / Secure Interconnection Functionality",
+      "goal": "The Gateway's data filtering and secure interconnection functionality shall maintain integrity and prevent unauthorized data flow between vehicle networks.",
       "risk_level": 4
     },
     {
       "related_asset": "OTA Firmware Update Functionality",
-      "goal": "The OTA firmware update mechanism shall ensure the integrity and authenticity of all updates delivered to connected ECUs to prevent malicious software deployment.",
-      "risk_level": 4
+      "goal": "The OTA firmware update mechanism shall ensure the authenticity and integrity of all firmware delivered to the Gateway and connected ECUs.",
+      "risk_level": 5
     },
     {
-      "related_asset": "Data Filtering Functionality",
-      "goal": "The gateway's data filtering functionality shall maintain the integrity and availability of its rules to prevent unauthorized data flow between vehicle networks.",
+      "related_asset": "Vehicle Network Data (across CAN, LIN, FlexRay, Ethernet)",
+      "goal": "The confidentiality, integrity, and authenticity of data communicated across vehicle networks (CAN, LIN, FlexRay, Ethernet) shall be protected.",
       "risk_level": 4
-    },
-    {
-      "related_asset": "Vehicle Data (on Buses)",
-      "goal": "The confidentiality, integrity, and availability of vehicle data communicated via in-vehicle buses (CAN, LIN, FlexRay, Ethernet) shall be protected against unauthorized access or modification.",
-      "risk_level": 3
     }
   ],
   "security_requirements": [
     {
-      "related_goal": "The gateway MCU/MPU shall ensure the integrity and authenticity of its software to prevent unauthorized execution of malicious code.",
-      "requirement": "The gateway MCU/MPU shall implement a secure boot mechanism that cryptographically verifies the integrity and authenticity of all loaded firmware images before execution.",
-      "requirement_rationale": "Secure boot prevents the execution of tampered or unauthorized firmware by verifying digital signatures and checksums, thereby ensuring that only trusted software runs on the MCU/MPU. This directly mitigates the tampering threat and ensures the integrity and availability of the MCU/MPU's operations."
+      "related_goal": "The Gateway's MCU/MPU and its software shall be protected against unauthorized code execution and malicious control.",
+      "requirement": "The Gateway MCU/MPU shall implement hardware-enforced secure boot, memory protection units (MPU/MMU), and runtime integrity monitoring.",
+      "requirement_rationale": "This directly mitigates Elevation of Privilege, Tampering, and Denial of Service by ensuring only trusted code executes at startup, isolating critical processes, and detecting unauthorized changes during operation, making it harder for an attacker to achieve arbitrary code execution."
     },
     {
-      "related_goal": "The gateway MCU/MPU shall ensure the integrity and authenticity of its software to prevent unauthorized execution of malicious code.",
-      "requirement": "The gateway MCU/MPU shall implement hardware-enforced memory protection (e.g., MPU/MMU) to isolate critical software components and data from unauthorized access or modification.",
-      "requirement_rationale": "Memory protection mechanisms prevent malicious code (even if partially injected) from accessing or corrupting critical system memory areas, thereby improving the integrity and availability of the MCU/MPU and its functions."
+      "related_goal": "The Gateway's data filtering and secure interconnection functionality shall maintain integrity and prevent unauthorized data flow between vehicle networks.",
+      "requirement": "The Gateway shall implement stateful packet inspection and cryptographic authentication for critical data packets exchanged between different network domains.",
+      "requirement_rationale": "This directly mitigates Tampering and Spoofing threats by ensuring that only valid and authenticated messages pass through the gateway, preventing malicious data injection and unauthorized access to different network segments."
     },
     {
-      "related_goal": "The OTA firmware update mechanism shall ensure the integrity and authenticity of all updates delivered to connected ECUs to prevent malicious software deployment.",
-      "requirement": "The OTA firmware update process shall utilize strong cryptographic signatures to authenticate the origin and verify the integrity of all firmware packages before installation on any ECU.",
-      "requirement_rationale": "Cryptographic signatures ensure that firmware updates originate from a trusted source and have not been tampered with in transit. This directly mitigates spoofing and tampering threats, safeguarding the integrity and authenticity of OTA updates."
+      "related_goal": "The OTA firmware update mechanism shall ensure the authenticity and integrity of all firmware delivered to the Gateway and connected ECUs.",
+      "requirement": "The OTA update system shall use strong cryptographic signatures (e.g., ECC, RSA with sufficient key length) for all firmware images, with signature verification performed both on the Gateway and the target ECUs. A secure communication channel (e.g., TLS) shall be used for update delivery.",
+      "requirement_rationale": "This directly mitigates Tampering, Spoofing, and Elevation of Privilege by ensuring that only firmware from trusted sources can be installed, preventing attackers from injecting malicious updates or bricking devices. The secure channel protects against interception and modification during transit."
     },
     {
-      "related_goal": "The OTA firmware update mechanism shall ensure the integrity and authenticity of all updates delivered to connected ECUs to prevent malicious software deployment.",
-      "requirement": "The gateway shall implement secure communication channels (e.g., TLS) for all external communication related to OTA updates, including fetching update packages and status reporting.",
-      "requirement_rationale": "Secure communication channels protect against eavesdropping, tampering, and man-in-the-middle attacks during the OTA update process, ensuring the confidentiality and integrity of the update delivery mechanism."
-    },
-    {
-      "related_goal": "The gateway's data filtering functionality shall maintain the integrity and availability of its rules to prevent unauthorized data flow between vehicle networks.",
-      "requirement": "The gateway shall implement robust access control mechanisms to prevent unauthorized modification or bypass of its data filtering rules, allowing only authenticated and authorized entities to manage configurations.",
-      "requirement_rationale": "Access control ensures that only authorized personnel or processes can alter filtering rules, preventing malicious bypasses or modifications, thereby maintaining the integrity and availability of the filtering functionality."
-    },
-    {
-      "related_goal": "The gateway's data filtering functionality shall maintain the integrity and availability of its rules to prevent unauthorized data flow between vehicle networks.",
-      "requirement": "The gateway shall employ deep packet inspection (DPI) capabilities to validate the structure and content of messages against expected protocols and values before forwarding them between different vehicle networks.",
-      "requirement_rationale": "DPI goes beyond basic packet filtering to analyze the content of messages, detecting anomalous or malicious data that might conform to basic protocol headers but contain unsafe payloads, thus enhancing the integrity of data flow."
-    },
-    {
-      "related_goal": "The confidentiality, integrity, and availability of vehicle data communicated via in-vehicle buses (CAN, LIN, FlexRay, Ethernet) shall be protected against unauthorized access or modification.",
-      "requirement": "The gateway shall implement message authentication and integrity checks (e.g., MACs, secure on-board communication - SecOC) for safety-critical messages transmitted across CAN, FlexRay, and Ethernet buses.",
-      "requirement_rationale": "Message authentication and integrity checks ensure that critical data messages originate from legitimate sources and have not been altered in transit, directly mitigating spoofing and tampering threats on the bus, thus preserving data integrity and authenticity."
-    },
-    {
-      "related_goal": "The confidentiality, integrity, and availability of vehicle data communicated via in-vehicle buses (CAN, LIN, FlexRay, Ethernet) shall be protected against unauthorized access or modification.",
-      "requirement": "The gateway shall enforce strict separation and isolation between different vehicle network domains (e.g., using VLANs for Ethernet, and logical partitioning for CAN/LIN) to limit the impact of a compromise in one domain.",
-      "requirement_rationale": "Network segregation limits the blast radius of a successful attack, preventing an attacker who compromises one network from easily gaining access or control over other, more critical, vehicle networks. This enhances overall system availability and integrity."
+      "related_goal": "The confidentiality, integrity, and authenticity of data communicated across vehicle networks (CAN, LIN, FlexRay, Ethernet) shall be protected.",
+      "requirement": "All critical safety-related and privacy-sensitive data communications on CAN, LIN, FlexRay, and Ethernet networks shall be protected with Message Authentication Codes (MACs) or encryption where confidentiality is required, and unique session keys.",
+      "requirement_rationale": "This directly mitigates Information Disclosure, Tampering, and Spoofing threats by ensuring that sensitive data cannot be easily read, altered, or impersonated by an attacker who gains access to the network."
     }
   ]
 }

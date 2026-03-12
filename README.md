@@ -149,7 +149,7 @@ A custom Python function natively bound to the ADK agent. It receives the massiv
 
 ## 💬 Example Execution: NXP Gateway reference platform
 
-### Scenario: Multi-modal Ingestion of a Smart Access Architecture
+### Scenario: Multi-modal Ingestion of an Automotive Gateway Architecture
 **Input:** A PDF block diagram of the NXP Gateway reference platform with introduction and architecture block diagram
 **Prompt:** "Perform a full TARA and generate security requirements based on this uploaded architecture diagram."
 
@@ -193,7 +193,6 @@ root_agent = Agent(
     model='gemini-2.5-flash', # Can be upgraded to 'gemini-2.5-pro' for deeper reasoning
     # ...
 )
-```
 ```
 ## 📄 License
 
