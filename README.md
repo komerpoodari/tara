@@ -1,14 +1,20 @@
-# Automated ISO/SAE 21434 TARA Agent
+# Agentic-TARA: Multi-modal AI for ISO/SAE 21434 Compliance
 
 **Created by Komuraiah Poodari, CISSP**
 
-A multi-modal AI agent built on Google's Agent Development Kit (ADK), Vertex AI environment, and Gemini 2.5 Flash, designed to automate Threat Analysis and Risk Assessments (TARA) for automotive cyber-physical systems. This version is at a Proof-of-Concept (POC) stage.
+A multi-modal AI agent built on Google's Agent Development Kit (ADK), Vertex AI environment, and Gemini 2.5 Flash, designed to automate Threat Analysis and Risk Assessments (TARA) for automotive cyber-physical systems. This version is a Proof-of-Concept (POC).
 
 ## 🎯 Project Overview
 
-The **Automated Threat Analysis and Risk Assessment (TARA) Agent** accelerates the automotive cybersecurity lifecycle by analyzing E/E architecture block diagrams and generating **ISO/SAE 21434** standard-aligned, audit-ready threat models. 
+The **Automated Threat Analysis and Risk Assessment (TARA) Agent** accelerates the automotive cybersecurity lifecycle by analyzing E/E architecture block diagrams and generating **ISO/SAE 21434** standard-aligned, audit-ready threat models. Unlike standard LLM implementations, this project uses a **hybrid AI-Deterministic approach**:
 
-By leveraging Google ADK native multi-modal capabilities, this agent eliminates the manual bottleneck of parsing Bills of Materials (BoM) and calculating risk vectors, reducing a weeks-long engineering process down to minutes/hours.
+The goal is to compress time and resources required for TARA by leveraging Google ADK native multi-modal capabilities. This agent eliminates the manual bottleneck of parsing Bills of Materials (BoM) and calculating risk vectors, reducing a weeks-long engineering process down to hours.
+* The AI conducts the threat analysis and risk assessment (TARA) based on the instructions provided by the developer.
+* The model determines the impact and feasibility ratings.
+* The model maps the (asset damage impact rating, feasibility rating) to risk based on ISO/SAE 21434 Annex H. guidance.
+* The prescribes security goals and security requirements (engineering controls).
+
+
 
 ### Key Features
 
@@ -18,8 +24,28 @@ By leveraging Google ADK native multi-modal capabilities, this agent eliminates 
 - 🛡️ **Actionable Engineering Controls**: Maps high-risk threat scenarios to specific technical requirements (e.g., SecOC, MACsec, UWB distance bounding).
 - 📊 **Dual-Format Output**: Automatically generates human-readable Markdown reports for review and machine-readable JSON payloads for direct MBSE/Jira ingestion.
 - 🚀 **Built on Google ADK and Vertex AI environment**: Utilizing standard Python function calling for reliable, local file-system integration.
+- 🧠 **STRIDE Threat Modeling**: Every threat scenario is categorized to ensure coverage of Spoofing, Tampering, Repudiation, Info Disclosure, DoS, and Elevation of Privilege.
+
+- 🔝 **Maximum Impact Principle**: Automatically evaluates SFOP (Safety, Financial, Operational, Privacy) and bases the TARA on the highest identified impact level.
 
 ---
+
+## Methodology & Standards
+### 1. Threat Identification (STRIDE)
+The agent uses the STRIDE framework to analyze each asset in the Bill of Materials. This ensures that the generated scenarios meet the requirements for "Threat Scenario Identification" as per ISO 21434 Section 15.
+### 2. Risk Determination (Annex H)
+To prevent "AI Hallucinations" in safety-critical scoring, the agent passes its findings to a deterministic Python function that enforces the standard risk matrix:
+
+
+| Impact \ Feasibility | Very Low | Low | Medium | High |
+| :--- | :--- | :--- | :--- | :--- |
+| Severe | 2 | 3 | 4 | 5 |
+| Major | 1 | 2 | 3 | 4 |
+| Moderate | 1 | 2 | 2 | 3 |
+| Negligible | 1 | 1 | 1 | 1 |
+
+### 3. Feasibility Analysis (Annex G)
+Attack feasibility also considers the Attack Vector (Network, Adjacent, Local, Physical).
 
 ## 📁 Project Folder Structure
 
@@ -67,8 +93,10 @@ output and local tool execution:
             └──────────┬───────────┘
                        │
                        │ 1. Extracts BoM visually
-                       │ 2. Computes CIA/SFOP Impact
+                       │ 2. Computes CIA/SFOP Impact, based on STRIDE threat modeling and 
+                       |    ISO/SAE 21434 Table H.8. risk mapping.
                        │ 3. Applies CoT Rationale
+                       |
                        ▼
             ┌──────────────────────┐
             │   Tool Execution     │
@@ -119,27 +147,40 @@ A custom Python function natively bound to the ADK agent. It receives the massiv
 3. pip install google-adk
 ```
 
-## 💬 Example Execution: NXP Digital Key
+## 💬 Example Execution: NXP Gateway reference platform
 
 ### Scenario: Multi-modal Ingestion of a Smart Access Architecture
-**Input:** A PDF block diagram of the NXP Digital Key Reference System (CCC/ICCE/ICCOA).
+**Input:** A PDF block diagram of the NXP Gateway reference platform with introduction and architecture block diagram
 **Prompt:** "Perform a full TARA and generate security requirements based on this uploaded architecture diagram."
 
-**Output Snippet (Chain of Thought in Action):**
-*The agent successfully identified the Secure Element (NCJ38x) and accurately calculated its risk profile by reasoning through the attack feasibility:*
 
-> **Asset:** Vehicle - Inside - Access ECU - Secure Element (NCJ38x)
-> **Threat Scenario:** Invasive or semi-invasive physical attack (e.g., micro-probing, fault injection) on the Secure Element.
-> **Impact:** Severe
-> * **Impact Rationale:** *Direct compromise of the root of trust, leading to unauthorized vehicle access/start, potentially endangering occupants. Complete system bypass.*
-> **Feasibility:** Low
-> * **Feasibility Rationale:** *Requires highly specialized and expensive equipment, significant expertise in chip reverse engineering and fault injection techniques, and physical access to the chip itself.*
-> **Risk Value:** 3
 
-*(Here is the output from the agent:)*
 
-![TARA Matrix Output](./assets/tara-matrix.png)
----
+## 📊 Sample Output (abridged)
+
+### Threat Analysis & Risk Matrix with STRIDE
+| Asset | CIA | Damage Scenario | Impact | Impact Rationale | Threat Scenario | Feasibility | Feasibility Rationale | Risk |
+|---|---|---|---|---|---|---|---|---|
+| MCU/MPU | Integrity, Availability | Malicious code injected into MCU/MPU firmware, leading to incorrect data routing, manipulation, or denial of service for critical vehicle functions. | Severe | *The MCU/MPU is the central processing unit of the gateway. A compromise of its integrity or availability would directly lead to critical safety functions being bypassed or manipulated (S), rendering the vehicle inoperable (O), and potentially incurring significant repair costs and reputational damage (F). Therefore, the maximum impact is Severe. (Category: S, O)* | An attacker exploits a vulnerability in the gateway's network stack or an unpatched vulnerability in the MCU/MPU's bootloader/firmware update mechanism to remotely flash malicious firmware onto the MCU/MPU. | Medium | *This attack requires advanced technical skills and potentially remote access to the vehicle's network (e.g., via infotainment, cellular, or diagnostics). Exploiting an MCU/MPU bootloader involves specialized knowledge, but is plausible given time and resources, especially if known vulnerabilities exist or physical access allows for side-channel attacks. The presence of OTA updates indicates a possible remote vector for firmware manipulation. (STRIDE: Tampering, Spoofing)* | **4** 🚨 |
+| OTA Firmware Update Functionality | Integrity, Authenticity | An attacker delivers a malicious OTA firmware update to ECUs through the gateway, compromising their functionality, safety, or privacy. | Severe | *Compromised OTA updates could lead to widespread installation of malicious software across multiple ECUs, directly impacting vehicle safety (S) by causing malfunctions or unintended behavior. This could also lead to severe operational failures (O) and significant financial repercussions for recalls, repairs, and legal liabilities (F). The maximum impact is Severe. (Category: S, O)* | An attacker intercepts or spoofs the OTA update server, or gains control over the gateway's update mechanism, to push unauthorized or malicious firmware packages to connected ECUs. | Medium | *Exploiting OTA update mechanisms requires sophisticated knowledge of cryptographic protocols, server infrastructure, or specific gateway vulnerabilities. While challenging, known vulnerabilities in update processes have been demonstrated. This could involve network-based attacks (e.g., DNS spoofing, man-in-the-middle) or exploiting vulnerabilities in the gateway's update client. (STRIDE: Spoofing, Tampering)* | **4** 🚨 |
+| Data Filtering Functionality | Integrity, Availability | The gateway's data filtering rules are bypassed or altered, allowing unauthorized and potentially malicious data packets to traverse between vehicle networks, leading to compromise of connected ECUs. | Major | *Bypassing data filtering could enable an attacker to reach and compromise safety-critical ECUs, leading to unintended vehicle behavior (S) or operational failures (O). While not directly manipulating core gateway functions, it facilitates attacks on other critical components. The financial impact (F) could be substantial due to potential repairs and liabilities. The maximum impact is Major. (Category: S, O)* | An attacker exploits a vulnerability in the gateway's firewall or filtering software to inject crafted packets that bypass filtering rules, or modifies the rules themselves, allowing unauthorized network traffic. | High | *Exploiting network filtering rules often involves sophisticated network penetration techniques, fuzzing, or exploiting known vulnerabilities in the filtering software. If the gateway provides diagnostic access, this could be a vector. Such attacks often require prior knowledge of the network protocols and filtering logic. (STRIDE: Tampering, Bypass of Security Features)* | **4** 🚨 |
+| Vehicle Data (on Buses) | Confidentiality, Integrity, Availability | Sensitive vehicle data (e.g., sensor readings, control commands) is intercepted, modified, or replayed by an attacker on CAN, LIN, FlexRay, or Ethernet buses, causing incorrect vehicle behavior or data leakage. | Severe | *Manipulation of critical vehicle data directly impacts safety (S) by causing erroneous control commands or sensor readings, potentially leading to accidents. Data leakage could expose sensitive operational information (P). Disruption of data flow causes severe operational impact (O). Financial implications (F) could be substantial. The maximum impact is Severe. (Category: S, P, O)* | An attacker with physical access to the vehicle (e.g., via OBD-II port, exposed wiring) or having compromised an ECU connected to the bus, injects malicious messages, or eavesdrops on communications. | Low | *Attacks on in-vehicle buses (CAN, LIN) often require physical access to the network or a compromised ECU connected to the network. While physical access lowers the technical barrier, it is still a specific requirement. Eavesdropping and injection on these buses with physical access is well-documented and relatively straightforward with off-the-shelf tools. Ethernet buses might allow for more complex remote attacks if not properly secured. (STRIDE: Tampering, Spoofing, Information Disclosure)* | 3 |
+
+## 3. Security Goals (Risk Treatment)
+**Asset:** MCU/MPU
+> The gateway MCU/MPU shall ensure the integrity and authenticity of its software to prevent unauthorized execution of malicious code.
+
+**Asset:** OTA Firmware Update Functionality
+> The OTA firmware update mechanism shall ensure the integrity and authenticity of all updates delivered to connected ECUs to prevent malicious software deployment.
+
+**Asset:** Data Filtering Functionality
+> The gateway's data filtering functionality shall maintain the integrity and availability of its rules to prevent unauthorized data flow between vehicle networks.
+
+**Asset:** Vehicle Data (on Buses)
+> The confidentiality, integrity, and availability of vehicle data communicated via in-vehicle buses (CAN, LIN, FlexRay, Ethernet) shall be protected against unauthorized access or modification.
+
+## 4. Security Requirements (Engineering Controls)
+**Maps to Goal:** The gateway MCU/MPU shall ensure the integrity and authenticity of its software to prevent unauthorized execution of malicious code.
 
 ## 📦 Configuration
 
@@ -153,14 +194,7 @@ root_agent = Agent(
     # ...
 )
 ```
-## 🧪 Testing
-To run a regression test and verify the local tool execution pipeline without uploading a document, you can paste a text-based architecture description directly into the ADK chat interface:
 ```
-Target: Automotive PEPS System
-Components: NXP PCF7953 Fob MCU, 125kHz LF Antenna, 433MHz UHF Transmitter, S32K144 SKM MCU.
-Perform a full ISO 21434 TARA.
-```
-
 ## 📄 License
 
 Licensed under the Apache License 2.0. See LICENSE file for details.
@@ -169,7 +203,7 @@ Licensed under the Apache License 2.0. See LICENSE file for details.
 
 ## 🤝 Contributing
 
-1. Contributions to improve the agent's architectural recognition or ISO/SAE 21434 compliance logic are welcome!
+1. Contributions to improve the agent's architectural recognition or ISO/SAE 21434 compliance logic are **highly appreciated!**
 
 2. Fork the repository
 
@@ -193,4 +227,4 @@ Licensed under the Apache License 2.0. See LICENSE file for details.
 
 ## ⚠️ Disclaimer
 
-This tool is a Proof of Concept (POC) designed to accelerate the threat modeling process. LLMs are probabilistic systems. All AI-generated Threat Analysis and Risk Assessments (TARAs), Security Goals, and Engineering Requirements must be rigorously reviewed and verified by a qualified Human-in-the-Loop (HITL) before being applied to safety-critical cyber-physical systems. This tool shall not be used for production system assessments. It is work-in-progress.
+This tool is a **Proof of Concept (POC)** designed to accelerate the threat modeling process. LLMs are probabilistic systems. All AI-generated Threat Analysis and Risk Assessments (TARAs), Security Goals, and Engineering Requirements must be rigorously reviewed and verified by a qualified Human-in-the-Loop (HITL) before being applied to safety-critical cyber-physical systems. This tool in its current state shall not be used for production system assessments. It is work-in-progress.

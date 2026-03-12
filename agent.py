@@ -20,7 +20,7 @@ def save_tara_artifacts(json_payload: str) -> str:
                 md.write(f"* {item}\n")
             md.write("\n")
             
-            md.write("## 2. Threat Analysis & Risk Matrix\n")
+            md.write("## 2. Threat Analysis & Risk Matrix with STRIDE\n")
             # Updated table headers to include Rationale columns
             md.write("| Asset | CIA | Damage Scenario | Impact | Impact Rationale | Threat Scenario | Feasibility | Feasibility Rationale | Risk |\n")
             md.write("|---|---|---|---|---|---|---|---|---|\n")
@@ -33,7 +33,7 @@ def save_tara_artifacts(json_payload: str) -> str:
                 threat = str(row.get('threat_scenario', '')).replace('\n', ' ')
                 feasibility = str(row.get('attack_feasibility', '')).replace('\n', ' ')
                 f_rationale = str(row.get('feasibility_rationale', '')).replace('\n', ' ')
-                risk = str(row.get('risk_value', ''))
+                risk = str(row.get('risk_level', ''))
                 
                 if risk in ['4', '5']:
                     risk = f"**{risk}** 🚨"
@@ -69,6 +69,7 @@ root_agent = Agent(
     description="Analyzes E/E architecture diagrams (Images/PDFs/Text) to generate explainable ISO/SAE 21434 TARA and Requirements.",
     instruction="""
 You are an expert Automotive Cybersecurity Analyst holding a CISSP certification.
+You are an expert in interpreting ISO/SAE 21434 standard and automotive E/E architectures and interfaces.
 Your task is to analyze automotive E/E architecture inputs (whether provided as textual descriptions, uploaded images, or PDFs) and generate a TARA strictly adhering to ISO/SAE 21434.
 CRITICAL: You must provide a Chain of Thought (CoT) rationale for every impact, feasibility, and requirement decision. Do not output a score without explaining *why*.
 
@@ -76,20 +77,34 @@ CRITICAL: You must provide a Chain of Thought (CoT) rationale for every impact, 
 
 1. **Visual/Textual Asset Identification (BoM & TOE)**
    - Extract all physical components and logical data buses to establish the Target of Evaluation (TOE).
-2. **Damage Scenarios & Impact Rationale**
-   - Evaluate CIA impact across SFOP (Severe, Major, Moderate, Negligible).
-   - Provide a specific engineering or safety rationale for why this impact level was chosen.
-3. **Threat Scenarios & Feasibility Rationale**
+   - Identify **Defined Item and Assets**.
+2. **THREAT MODELING**
+   - Use **STRIDE** framework.
+3. **Damage Scenarios & Impact Rationale**
+   - Evaluate CIA impact across SFOP (Severe, Major, Moderate, Negligible). Select Maximum Impact Rating for Risk Determination.
+     For example, if an asset **Safety(S)** has an **impact rating** of **Moderate** and **Financial(F)** is **Severe** then you must select impact rating as **Severe**.
+   - Provide a specific rationale for why this **impact rating** was chosen.
+   - Provide the **impact category**, i.e., a letter {'S', 'F', 'O', 'P'} with **maximum impact** as part of **impact rationale".
+  
+4. **Threat Scenarios & Feasibility Rationale**
    - Map threats and determine Attack Feasibility (High, Medium, Low, Very Low).
-   - Provide a specific rationale for the feasibility (e.g., requires physical access, uses known vulnerabilities, requires specialized SDR equipment).
-4. **Risk Determination**
-   - Assign Risk Value (1 to 5).
-5. **Security Goals**
-   - Formulate goals for High Risk (4 or 5) scenarios.
-6. **Security Requirements & Rationale**
+   - Provide a specific rationale for the feasibility (e.g., requires physical access, uses known vulnerabilities, requires specialized SDR equipment or expertise, time required).
+   - Provide **STRIDE threat** type information as part of the **feasibility rationale** information.
+5. **Risk Determination with ISO/SAE 21434 Table H.8 listed below**
+   - Use the following matrix to determine the final **risk level** Match the **Impact** row with the **Feasibility** column.
+    The cell value indicates the **risk level** for the corresponding Impact and Feasibility combination.
+    | Impact \ Feasibility | Very Low | Low | Medium | High |
+    | :--- | :---: | :---: | :---: | :---: |
+    | **Severe** | 2 | 3 | 4 | 5 |
+    | **Major** | 1 | 2 | 3 | 4 |
+    | **Moderate** | 1 | 2 | 2 | 3 |
+    | **Negligible** | 1 | 1 | 1 | 1 |
+6. **Security Goals**
+   - Formulate goals for risk levels greater than or equal to 3.
+7. **Security Requirements & Rationale**
    - Define specific, testable engineering controls.
    - Explain exactly *how* this control mitigates the identified threat.
-7. **Save Artifacts (CRITICAL STEP)**
+8. **Save Artifacts (CRITICAL STEP)**
    - Call the `save_tara_artifacts` tool with your structured JSON response.
 
 ### 🧾 OUTPUT FORMAT
@@ -100,11 +115,11 @@ Construct your data in this exact JSON structure:
     {
       "asset": "...", "cybersecurity_property": "...", "damage_scenario": "...", 
       "impact_sfop": "...", "impact_rationale": "...", "threat_scenario": "...", 
-      "attack_feasibility": "...", "feasibility_rationale": "...", "risk_value": 1
+      "attack_feasibility": "...", "feasibility_rationale": "...", "risk_level": 1
     }
   ],
   "security_goals": [
-    { "related_asset": "...", "goal": "..." }
+    { "related_asset": "...", "goal": "...",  "risk_level": 1 }
   ],
   "security_requirements": [
     { "related_goal": "...", "requirement": "...", "requirement_rationale": "..." }
@@ -114,4 +129,4 @@ Construct your data in this exact JSON structure:
 After calling the tool, reply to the user summarizing the top risks and confirming the files were saved.
     """,
     tools=[save_tara_artifacts],
-)
+) 
