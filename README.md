@@ -64,7 +64,7 @@ Agent-based-TARA/
 | File | Purpose |
 |------|---------|
 | **__init__.py** | Simple initialization file to import custom agent for ADK |
-| **config.py** | Contains the system prompt instructions, Chain of Thought constraints, and the custom Python tool for output (JSON and markdown files) generation |
+| **agent.py** | Contains the system prompt instructions, Chain of Thought constraints, and the custom Python tool for output (JSON and markdown files) generation |
 | **tara_output.json** | The strict JSON payload containing the BoM, TARA matrix, Security Goals, and Requirements. Ready for MBSE integration. |
 | **tara_report.md** |  A formatted, highly scannable Markdown report with conditional logic (e.g., highlighting Risk Values of 4 or 5). |
 
