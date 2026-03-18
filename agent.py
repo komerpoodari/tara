@@ -12,7 +12,7 @@ def save_tara_artifacts(json_payload: str) -> str:
         with open(json_file_path, 'w') as f:
             json.dump(data, f, indent=2)
             
-        with open(md_file_path, 'w') as md:
+        with open(md_file_path, 'w', encoding='utf-8') as md:
             md.write("# ISO/SAE 21434 TARA & Requirements Report\n\n")
             
             md.write("## 1. Target of Evaluation (BoM)\n")
