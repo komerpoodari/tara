@@ -16,3 +16,7 @@ venv/
 .gcloud/
 .config
 
+agentic_ai_roadmap.md
+flow.*
+tara_architecture.html
+__pycache__/

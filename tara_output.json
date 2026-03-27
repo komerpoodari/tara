@@ -1,111 +1,543 @@
 {
   "bom": [
-    "Gateway Module (physical device)",
     "MCU/MPU",
-    "PMIC and CAN/LIN SBC",
-    "CAN Interface (transceivers)",
-    "LIN Interface (transceivers)",
-    "FlexRay Transceivers",
+    "PMIC",
+    "System Basis Chip (SBC)",
+    "CAN Transceiver",
+    "LIN Transceiver",
+    "FlexRay Transceiver",
     "Ethernet PHY",
     "Ethernet Switch",
-    "CAN Networks (internal to vehicle)",
-    "LIN Networks (internal to vehicle)",
-    "FlexRay Network (internal to vehicle)",
-    "Ethernet Network(s) (internal to vehicle)",
-    "Data Filtering / Secure Interconnection Functionality",
-    "OTA Firmware Update Functionality",
-    "Vehicle Network Data (from powertrain, chassis, safety, body control, infotainment, telematics, ADAS)",
-    "Firmware Images (for OTA updates)",
-    "Configuration Data"
+    "CAN Interface",
+    "LIN Interface",
+    "FlexRay Interface",
+    "Automotive Ethernet Interface",
+    "CAN Networks",
+    "LIN Networks",
+    "FlexRay Networks",
+    "Automotive Ethernet Networks",
+    "Gateway Routing Logic",
+    "Data Filtering / Firewall",
+    "OTA Update Manager"
   ],
   "tara_matrix": [
     {
-      "asset": "Gateway Module (MCU/MPU)",
-      "cybersecurity_property": "Integrity, Authenticity, Availability",
-      "damage_scenario": "Compromise of the Gateway's MCU/MPU leading to arbitrary code execution, allowing an attacker to bypass data filtering, inject malicious commands, or take control of vehicle functions.",
+      "asset": "MCU/MPU",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker gains control of the MCU/MPU, executing malicious code that leads to unintended vehicle behavior (e.g., sudden braking, acceleration, or steering issues) or exfiltrating sensitive internal data and cryptographic keys.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Safety (S) is Severe - The Gateway connects to safety-critical domains (powertrain, chassis, safety, ADAS). Compromise could lead to loss of vehicle control, malfunction of safety features, or unintended vehicle behavior, directly causing accidents or harm. Financial (F) is Severe - Vehicle damage, theft, recall costs, reputational damage. Operational (O) is Severe - Vehicle rendered inoperable, unreliable, or unsafe. Privacy (P) is Moderate - Potential access to aggregated vehicle usage data or location data flowing through the gateway. Therefore, the maximum impact is Severe (S, F, O).",
-      "threat_scenario": "An attacker exploits a vulnerability in the Gateway's software/firmware (e.g., buffer overflow, unhandled input) via connected networks or interfaces to achieve remote code execution on the MCU/MPU.",
+      "impact_rationale": "Safety impact dominates: Compromise of the core processing unit can lead to loss of vehicle control, resulting in severe injury or fatality. Operational impact is also severe, as the vehicle becomes unsafe or inoperable. (Category: S, O)",
+      "threat_scenario": "An attacker exploits a firmware vulnerability (e.g., buffer overflow, insecure diagnostic interface) on the MCU/MPU via a diagnostic port or a remotely exploitable connected interface (e.g., infotainment, telematics unit). This allows them to inject and execute arbitrary code with elevated privileges.",
       "attack_feasibility": "Medium",
-      "feasibility_rationale": "This threat involves Elevation of Privilege, Tampering, Denial of Service, Information Disclosure. It requires knowledge of the Gateway's specific vulnerabilities, potentially complex exploit development. Could originate from external interfaces (e.g., telematics, infotainment, if connected through the gateway) or internal vehicle networks if an adjacent ECU is compromised. This results in Medium feasibility.",
+      "feasibility_rationale": "Requires significant expertise in embedded systems, reverse engineering, and exploit development for the specific MCU architecture. Access can range from local (diagnostic port) to remote (via network). The primary STRIDE threats are Tampering and Denial of Service, with potential Information Disclosure. (STRIDE: Tampering, Denial of Service, Information Disclosure)",
       "risk_level": 4
     },
     {
-      "asset": "Data Filtering / Secure Interconnection Functionality",
-      "cybersecurity_property": "Integrity, Authenticity, Confidentiality, Availability",
-      "damage_scenario": "Bypass of data filtering rules, allowing malicious or malformed data to pass between vehicle networks, leading to compromise of connected ECUs or unintended vehicle behavior.",
+      "asset": "PMIC",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker manipulates the PMIC's settings, causing unstable voltage supply to critical ECUs or a sudden power shutdown, leading to system crashes, data corruption, or complete vehicle power loss during operation.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Safety (S) is Severe - If malicious data reaches safety-critical ECUs (e.g., powertrain, brakes), it could directly cause accidents or loss of control. Financial (F) is Severe - Vehicle damage, recall costs, legal liabilities. Operational (O) is Severe - Vehicle rendered unreliable, unsafe, or inoperable. Privacy (P) is Moderate - Malicious data flow could exfiltrate sensitive data. Therefore, the maximum impact is Severe (S, F, O).",
-      "threat_scenario": "An attacker crafts malformed packets or exploits a logic flaw in the Gateway's filtering software to circumvent the intended security policies and inject unauthorized messages onto a different network domain.",
+      "impact_rationale": "Safety impact dominates: Unstable or absent power to safety-critical systems can cause sudden failures, leading to loss of vehicle control and severe accidents. Operational impact is severe as the vehicle becomes inoperable. (Category: S, O)",
+      "threat_scenario": "An attacker, having gained control of the main MCU, sends malicious commands via an internal interface (e.g., I2C, SPI) to the PMIC to alter power regulation settings, trigger resets, or force a complete power down of the system.",
       "attack_feasibility": "Medium",
-      "feasibility_rationale": "This threat involves Tampering (with data flow), Spoofing (of legitimate messages), Elevation of Privilege (to bypass security controls). It requires detailed knowledge of the gateway's filtering logic, network protocols, and potential vulnerabilities. Could be achieved through reverse engineering or exploiting known weaknesses. This often requires access to the network connected to the gateway. This results in Medium feasibility.",
+      "feasibility_rationale": "Requires an initial compromise of the controlling MCU, followed by expertise in the PMIC's register map and communication protocol. This is a targeted attack with adjacent access. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
       "risk_level": 4
     },
     {
-      "asset": "OTA Firmware Update Functionality",
-      "cybersecurity_property": "Integrity, Authenticity, Availability",
-      "damage_scenario": "Injection of malicious or unauthorized firmware updates to the Gateway or other ECUs, leading to full vehicle compromise or bricking of ECUs.",
+      "asset": "System Basis Chip (SBC)",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker causes the SBC to malfunction, disrupting critical communication transceivers (e.g., CAN, LIN) or power supply lines, leading to a sudden loss of network communication or system resets for attached ECUs, potentially during driving.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Safety (S) is Severe - Malicious firmware can take complete control of vehicle functions, disable safety systems, or introduce dangerous behavior, directly leading to accidents or harm. Financial (F) is Severe - Bricked ECUs, vehicle repair/replacement costs, potential for mass recalls, reputational damage. Operational (O) is Severe - Vehicle rendered inoperable, unreliable, or unsafe. Privacy (P) is Moderate - Malicious firmware could exfiltrate data. Therefore, the maximum impact is Severe (S, F, O).",
-      "threat_scenario": "An attacker intercepts the OTA update process or compromises the update server to deliver malicious firmware to the gateway or downstream ECUs. This could also involve exploiting vulnerabilities in the gateway's update client.",
+      "impact_rationale": "Safety impact dominates: Failure of communication transceivers or power supply can disable safety-critical systems connected via those networks, potentially causing accidents. Operational impact is severe. (Category: S, O)",
+      "threat_scenario": "Anattacker, having compromised the host MCU, sends malformed commands or exploits a vulnerability in the SBC's driver software via an internal bus (e.g., SPI) to disable integrated transceivers, force a system reset, or manipulate power management functions.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires prior compromise of the controlling MCU and specific knowledge of the SBC's interface and functionality. This is a targeted attack with adjacent access. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "CAN Transceiver",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker causes the CAN transceiver to malfunction, leading to corruption of legitimate CAN messages or preventing them from being transmitted, thus disrupting critical vehicle control signals and causing unsafe vehicle behavior.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Corruption or loss of safety-critical CAN messages can directly lead to dangerous vehicle behavior (e.g., loss of braking, unintended acceleration), posing a severe risk of injury or fatality. (Category: S)",
+      "threat_scenario": "An attacker, having gained control of the host MCU, sends malicious commands to the CAN transceiver to force it into an error-passive state, disable it, or transmit erroneous bit patterns, effectively jamming or corrupting communication on the CAN bus.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires prior compromise of the controlling MCU and understanding of the transceiver's control interface. While direct physical bus tampering can be easier for DoS, software control via MCU requires more expertise. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "LIN Transceiver",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker causes the LIN transceiver to malfunction, preventing LIN messages from being sent or received. This results in the loss of basic comfort features (e.g., window control, interior lighting) or erratic behavior of LIN-connected devices.",
+      "impact_sfop": "Moderate",
+      "impact_rationale": "Operational impact dominates: Disruption typically affects non-safety-critical comfort or basic body functions, leading to inconvenience and degraded user experience rather than direct safety risks. (Category: O)",
+      "threat_scenario": "An attacker, having gained control of the host MCU, sends specific commands to the LIN transceiver to disable it, force it into a sleep mode, or flood the LIN bus with invalid frames, disrupting communication with LIN slave devices.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires prior compromise of the controlling MCU and specific knowledge of the LIN transceiver's control registers. Similar to CAN transceiver, but LIN is simpler. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 2
+    },
+    {
+      "asset": "FlexRay Transceiver",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker causes the FlexRay transceiver to malfunction, disrupting the time-triggered communication or corrupting safety-critical FlexRay messages. This leads to immediate and catastrophic loss of highly critical functions like steering-by-wire or active suspension.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: FlexRay typically carries safety-critical, time-synchronous data. Its disruption can lead to a complete loss of vehicle control, resulting in severe injury or fatality. (Category: S)",
+      "threat_scenario": "An attacker, with deep access to the host MCU and specialized knowledge of FlexRay communication, sends malicious commands to the FlexRay transceiver to disrupt its precise timing, corrupt transmitted frames, or put it into an error state, causing a denial of service on the FlexRay network.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires prior compromise of the controlling MCU and a very high level of expertise in FlexRay's complex time-triggered protocol and transceiver control. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "Ethernet PHY",
+      "cybersecurity_property": "Integrity, Availability",
+      "damage_scenario": "An attacker causes the Ethernet PHY to malfunction, corrupting or blocking Ethernet frames. This results in the loss of high-bandwidth communication for ADAS, infotainment, or diagnostic systems, potentially affecting critical driving functions or connectivity.",
+      "impact_sfop": "Major",
+      "impact_rationale": "Operational impact dominates: Disrupts high-bandwidth communication essential for advanced features and potentially safety-related systems (e.g., ADAS data streams). While not always immediate safety, persistent disruption could be severe. (Category: O, S)",
+      "threat_scenario": "An attacker, having gained control of the host MCU, sends malicious commands via the Management Data Input/Output (MDIO) interface to the Ethernet PHY to disable the link, force a lower speed, or manipulate its operational mode, causing communication failure or degradation.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires prior compromise of the controlling MCU and expertise in Ethernet PHY management via MDIO. This is a targeted attack with adjacent access. The primary STRIDE threats are Tampering and Denial of Service. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 3
+    },
+    {
+      "asset": "Ethernet Switch",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker reconfigures the Ethernet switch, allowing unauthorized traffic between isolated network segments (e.g., exposing ADAS data to infotainment), performing a denial of service by blocking critical traffic, or corrupting routing tables, leading to system failure or data leakage.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Disruption of critical ADAS or vehicle control data paths can directly lead to accidents. Privacy impact is also severe due to unauthorized data disclosure. Operational impact is high due to network segmentation breach. (Category: S, P, O)",
+      "threat_scenario": "An attacker exploits a vulnerability in the switch's management interface (e.g., SNMP, Web GUI, or via a compromised connected ECU) to reprogram its forwarding rules, VLAN configurations, or Quality of Service (QoS) settings. This can lead to traffic redirection, data exfiltration, or a denial of service for connected ECUs.",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires gaining access to the switch's management plane, either via a compromised adjacent ECU or a direct remote vector if exposed. Expertise in network configuration and switch vulnerabilities is needed. The primary STRIDE threats are Tampering, Information Disclosure, and Denial of Service. (STRIDE: Tampering, Information Disclosure, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "CAN Interface",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker injects false CAN messages (e.g., spoofing sensor readings, sending malicious control commands) or blocks legitimate messages, causing the vehicle to behave erratically, lose critical functions (e.g., braking, steering), or reveal sensitive operational data.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Direct manipulation of CAN messages can compromise fundamental vehicle control systems, leading to severe injury or fatality. Operational impact is also severe. (Category: S, O)",
+      "threat_scenario": "An attacker gains access to the CAN bus (e.g., via the OBD-II port, a compromised infotainment system, or physical wiretapping) and then exploits the lack of inherent authentication in CAN to inject spoofed messages (Tampering/Spoofing) or flood the bus (Denial of Service).",
       "attack_feasibility": "High",
-      "feasibility_rationale": "This threat involves Tampering (with firmware), Spoofing (of update server), Elevation of Privilege (to flash unauthorized code), Denial of Service (bricking). While OTA systems are designed with security, vulnerabilities in the update server, communication channel, or the client-side update verification (e.g., weak crypto, implementation flaws) have been observed in other systems. A sophisticated attacker could target these weaknesses. The gateway is a central point for updates, making this a High feasibility attack due to the potential attack surface.",
+      "feasibility_rationale": "CAN protocol inherently lacks message authentication, encryption, and source validation. Once network access is achieved (which can be relatively low effort for physical/local access), injection and eavesdropping are straightforward. (STRIDE: Spoofing, Tampering, Denial of Service)",
       "risk_level": 5
     },
     {
-      "asset": "Vehicle Network Data (across CAN, LIN, FlexRay, Ethernet)",
-      "cybersecurity_property": "Confidentiality, Integrity, Authenticity",
-      "damage_scenario": "Eavesdropping on vehicle network data to gather sensitive information (e.g., location, driving habits, personal settings) or unauthorized injection of messages to manipulate vehicle behavior.",
+      "asset": "LIN Interface",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker injects false LIN messages (e.g., activating windows, lights) or blocks legitimate LIN messages, causing inconvenience, unexpected behavior of comfort features, or potential distractions to the driver.",
+      "impact_sfop": "Moderate",
+      "impact_rationale": "Operational impact dominates: Attacks primarily affect comfort features, leading to nuisance or degraded user experience. While minor safety distractions are possible, the direct safety impact is generally low. (Category: O)",
+      "threat_scenario": "An attacker gains access to the LIN bus (e.g., via physical tap or by compromising an adjacent ECU) and exploits the lack of security in the LIN protocol to send unauthorized messages (Spoofing/Tampering) or disrupt the LIN master's communication (Denial of Service).",
+      "attack_feasibility": "High",
+      "feasibility_rationale": "Similar to CAN, the LIN protocol lacks inherent security mechanisms (authentication, encryption). Once physical or adjacent network access is gained, injecting or blocking messages is relatively easy. (STRIDE: Spoofing, Tampering, Denial of Service)",
+      "risk_level": 3
+    },
+    {
+      "asset": "FlexRay Interface",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker injects false FlexRay messages (e.g., erroneous steering commands, braking commands) or disrupts the time-triggered communication, leading to immediate and catastrophic loss of safety-critical vehicle functions.",
       "impact_sfop": "Severe",
-      "impact_rationale": "Safety (S) is Severe - Injection of malicious commands onto critical networks (e.g., braking, steering) can cause immediate loss of control or accidents. Financial (F) is Major - Vehicle damage if manipulated, potential for data theft. Operational (O) is Major - Vehicle malfunction, unreliable operation. Privacy (P) is Severe - Comprehensive data about driver behavior, location, and potentially passenger information could be exposed. This impacts a large number of vehicle functions listed (infotainment, telematics, ADAS). Therefore, the maximum impact is Severe (S, P).",
-      "threat_scenario": "An attacker gains access to any of the vehicle networks (CAN, LIN, FlexRay, Ethernet) directly or indirectly (e.g., via a compromised ECU) and intercepts or injects data.",
+      "impact_rationale": "Safety impact dominates: FlexRay is used for highly safety-critical applications. Any compromise of its integrity or availability can lead to a complete loss of vehicle control and severe injury or fatality. (Category: S)",
+      "threat_scenario": "An attacker, with significant expertise and deep system access (e.g., through a compromised safety-critical ECU), attempts to inject malformed or unauthorized FlexRay frames onto the bus, or causes precise timing violations that disrupt the network's synchronized operation, leading to a denial of service or incorrect control. (Spoofing, Tampering, Denial of Service).",
       "attack_feasibility": "Medium",
-      "feasibility_rationale": "This threat involves Information Disclosure, Tampering, Spoofing. It requires physical access to the network (e.g., OBD-II port, tapping wires) or exploiting a vulnerability in a connected ECU to gain network access. Reverse engineering of network protocols (e.g., CAN IDs) is often needed. However, general tools for network analysis and injection are common, making this a Medium feasibility attack.",
+      "feasibility_rationale": "While FlexRay offers more intrinsic security (time-triggered, robust error handling) than CAN/LIN, a highly skilled attacker with advanced tools and deep system understanding could still attempt to disrupt it. It requires significant expertise and time. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "Automotive Ethernet Interface",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker intercepts, modifies, or injects Ethernet frames containing sensitive ADAS sensor data, vehicle control commands, or infotainment data, leading to incorrect vehicle decisions, data leakage, or system instability. A DoS attack could shut down critical high-bandwidth links.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Direct impact on ADAS/autonomous driving decisions can cause severe accidents. Privacy impact is also severe due to potential disclosure of sensitive data streams. Operational impact is high. (Category: S, P, O)",
+      "threat_scenario": "An attacker exploits vulnerabilities in network protocols (e.g., ARP spoofing, DHCP manipulation), switch configuration, or a connected ECU to launch man-in-the-middle attacks, inject malicious frames, or perform a denial of service on the Ethernet network. This can be initiated from physical access or a compromised adjacent ECU. (Spoofing, Tampering, Information Disclosure, Denial of Service)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Automotive Ethernet inherits standard Ethernet attack vectors, which are well-understood. While automotive implementations include security measures (e.g., MACsec, secure boot), these need to be robustly implemented to resist a skilled attacker. Requires moderate expertise. (STRIDE: Spoofing, Tampering, Information Disclosure, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "CAN Networks",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker floods the CAN network with high-priority messages (Denial of Service) or injects spoofed messages (e.g., false speed, brake pedal state) causing critical ECUs to malfunction or the vehicle to exhibit dangerous behavior.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Direct manipulation of CAN network traffic can lead to immediate and severe compromises of vehicle control, potentially resulting in severe injury or fatality. (Category: S)",
+      "threat_scenario": "An attacker gains access to a CAN network segment (e.g., via OBD-II port, compromised infotainment unit, or physically tapping the bus) and then transmits unauthenticated, malicious CAN messages to control or disrupt vehicle functions. (Spoofing, Tampering, Denial of Service)",
+      "attack_feasibility": "High",
+      "feasibility_rationale": "The CAN protocol design lacks inherent security features such as message authentication or encryption. Once an attacker has network access, injecting or manipulating messages is relatively straightforward, requiring only basic tools and protocol understanding. (STRIDE: Spoofing, Tampering, Denial of Service)",
+      "risk_level": 5
+    },
+    {
+      "asset": "LIN Networks",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker injects or blocks LIN messages, leading to the erratic operation or failure of comfort features (e.g., windows, mirrors, climate control, interior lights), causing user annoyance or distraction.",
+      "impact_sfop": "Moderate",
+      "impact_rationale": "Operational impact dominates: Attacks on LIN networks primarily cause inconvenience and degraded user experience due to the loss of non-safety-critical comfort features. Direct safety risks are generally low. (Category: O)",
+      "threat_scenario": "An attacker gains access to a LIN network (e.g., via physical tap or by compromising a connected ECU) and sends unauthorized LIN messages or disrupts the master/slave communication, causing connected devices to malfunction. (Spoofing, Tampering, Denial of Service)",
+      "attack_feasibility": "High",
+      "feasibility_rationale": "Similar to CAN, the LIN protocol is designed without built-in security features like authentication or encryption. Once physical or logical access to the network is established, manipulating traffic is relatively simple. (STRIDE: Spoofing, Tampering, Denial of Service)",
+      "risk_level": 3
+    },
+    {
+      "asset": "FlexRay Networks",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker introduces timing deviations, injects corrupted messages, or performs a denial of service on the FlexRay network, leading to catastrophic failure of safety-critical vehicle functions (e.g., x-by-wire systems).",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: FlexRay networks handle safety-critical, time-deterministic communications. Their compromise leads to an immediate loss of vehicle control, posing an extreme risk of severe injury or fatality. (Category: S)",
+      "threat_scenario": "An attacker with significant expertise and potentially physical access or deep system compromise attempts to disrupt the synchronized communication or inject carefully crafted malicious frames onto the FlexRay network, exploiting subtle timing vulnerabilities or implementation flaws. (Spoofing, Tampering, Denial of Service)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "FlexRay's time-triggered design and built-in error handling make it significantly harder to attack than CAN/LIN. However, a highly sophisticated attacker with specialized tools and deep protocol knowledge could still attempt to bypass or disrupt it, requiring substantial resources and expertise. (STRIDE: Tampering, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "Automotive Ethernet Networks",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker performs a denial of service, injects spoofed data (e.g., false sensor readings for ADAS), or intercepts sensitive data (e.g., ADAS camera feeds, infotainment personal data) on the Ethernet network, leading to incorrect autonomous driving decisions, data breaches, or complete system failure.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Direct compromise of ADAS/autonomous driving functions can cause severe accidents. Privacy impact is also severe due to the high volume of sensitive data transmitted. Operational impact is critical for advanced features. (Category: S, P, O)",
+      "threat_scenario": "An attacker exploits vulnerabilities in network protocols (e.g., ARP spoofing, DHCP manipulation), network devices (e.g., switches, ECUs), or software to launch man-in-the-middle attacks, inject malicious frames, flood the network, or eavesdrop on sensitive communications. This could be initiated from a compromised infotainment unit, diagnostic port, or remotely. (Spoofing, Tampering, Information Disclosure, Denial of Service)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Automotive Ethernet, while having more built-in security features than CAN/LIN, is susceptible to various standard network attacks. Exploiting these in an automotive context requires moderate expertise and potentially prior access to a connected ECU or network segment. (STRIDE: Spoofing, Tampering, Information Disclosure, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "Gateway Routing Logic",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker modifies the gateway's routing rules, allowing unauthorized messages to pass between otherwise isolated networks (e.g., infotainment to safety-critical CAN), injecting malicious messages into critical domains, or blocking legitimate traffic, leading to vehicle control compromise, data leakage, or system failure.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: A breach of network segmentation can expose safety-critical systems to malicious input, directly leading to accidents. Operational and privacy impacts are also severe due to systemic compromise and data leakage. (Category: S, O, P)",
+      "threat_scenario": "An attacker, having compromised the gateway's MCU, exploits a vulnerability in the routing logic's software to alter routing tables or firewall rules. This could lead to a breach of network segmentation, enabling attacks on previously isolated ECUs, or causing a denial of service by misrouting messages. (Tampering, Spoofing, Denial of Service)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires an initial, successful compromise of the gateway's MCU or management interface. This involves high expertise in firmware analysis and exploit development, but the impact of success is extremely high, making it a valuable target for sophisticated attackers. (STRIDE: Tampering, Spoofing, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "Data Filtering / Firewall",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker disables, bypasses, or reconfigures the data filtering/firewall, allowing malicious messages to reach critical ECUs, enabling unauthorized data exfiltration, or blocking legitimate traffic, leading to system compromise or denial of service.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Bypassing the firewall allows malicious messages to directly affect safety-critical systems, leading to severe accidents. Operational and privacy impacts are also severe due to systemic compromise and data leakage. (Category: S, O, P)",
+      "threat_scenario": "An attacker, having gained control of the gateway's MCU or a privileged process, exploits a vulnerability in the firewall's implementation (e.g., configuration parsing error, buffer overflow, logical flaw) to disable its rules, bypass its checks, or inject new rules that permit malicious traffic. (Tampering, Information Disclosure, Denial of Service)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "Requires a prior, successful compromise of the gateway's controlling entity and high expertise in security software vulnerabilities. This is a critical security control, so attacking it demands significant skill and resources. (STRIDE: Tampering, Information Disclosure, Denial of Service)",
+      "risk_level": 4
+    },
+    {
+      "asset": "OTA Update Manager",
+      "cybersecurity_property": "Confidentiality, Integrity, Availability",
+      "damage_scenario": "An attacker introduces malicious firmware updates, corrupts legitimate updates, or causes the update process to fail, leading to permanent system damage (bricking), introduction of malware, prolonged vehicle downtime, or disclosure of sensitive intellectual property.",
+      "impact_sfop": "Severe",
+      "impact_rationale": "Safety impact dominates: Injection of malicious firmware can lead to unsafe vehicle operation or complete loss of control. Operational impact is severe (bricking, extended downtime). Financial impact is immense due to widespread recalls, and privacy impact is high from IP disclosure. (Category: S, O, F, P)",
+      "threat_scenario": "An attacker intercepts an OTA update package, modifies it to contain malicious code (Tampering), or substitutes it with an entirely different malicious package (Spoofing). This could involve exploiting vulnerabilities in the update server, communication channels (e.g., insecure TLS), or the vehicle-side OTA Update Manager (e.g., insufficient signature verification, buffer overflows). A DoS attack could prevent critical security updates. (Tampering, Spoofing, Denial of Service, Information Disclosure)",
+      "attack_feasibility": "Medium",
+      "feasibility_rationale": "OTA update mechanisms are complex and involve multiple components (server, network, client). Exploiting vulnerabilities requires high expertise in cryptography, network protocols, and client-side software. Attacks have high scalability, making them a prime target for skilled adversaries. (STRIDE: Tampering, Spoofing, Denial of Service, Information Disclosure)",
       "risk_level": 4
     }
   ],
   "security_goals": [
     {
-      "related_asset": "Gateway Module (MCU/MPU)",
-      "goal": "The Gateway's MCU/MPU and its software shall be protected against unauthorized code execution and malicious control.",
+      "related_asset": "MCU/MPU",
+      "goal": "The MCU/MPU SHALL prevent unauthorized code execution and maintain the integrity of its firmware and sensitive data.",
       "risk_level": 4
     },
     {
-      "related_asset": "Data Filtering / Secure Interconnection Functionality",
-      "goal": "The Gateway's data filtering and secure interconnection functionality shall maintain integrity and prevent unauthorized data flow between vehicle networks.",
+      "related_asset": "PMIC",
+      "goal": "The PMIC's power regulation settings SHALL be protected from unauthorized manipulation and ensure stable power delivery.",
       "risk_level": 4
     },
     {
-      "related_asset": "OTA Firmware Update Functionality",
-      "goal": "The OTA firmware update mechanism shall ensure the authenticity and integrity of all firmware delivered to the Gateway and connected ECUs.",
+      "related_asset": "System Basis Chip (SBC)",
+      "goal": "The SBC's critical communication transceivers and power supply lines SHALL operate reliably and be protected from unauthorized interference.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "CAN Transceiver",
+      "goal": "The CAN transceiver SHALL ensure the integrity and authenticity of transmitted and received CAN messages.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "FlexRay Transceiver",
+      "goal": "The FlexRay transceiver SHALL maintain the integrity and availability of time-triggered communication.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Ethernet PHY",
+      "goal": "The Ethernet PHY SHALL ensure reliable and secure data transmission and reception, preventing unauthorized disruption or manipulation.",
+      "risk_level": 3
+    },
+    {
+      "related_asset": "Ethernet Switch",
+      "goal": "The Ethernet switch SHALL enforce network segmentation and ensure the integrity and confidentiality of routing tables and data.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "CAN Interface",
+      "goal": "The CAN interface SHALL prevent the injection of false messages and ensure the authenticity and integrity of legitimate messages.",
       "risk_level": 5
     },
     {
-      "related_asset": "Vehicle Network Data (across CAN, LIN, FlexRay, Ethernet)",
-      "goal": "The confidentiality, integrity, and authenticity of data communicated across vehicle networks (CAN, LIN, FlexRay, Ethernet) shall be protected.",
+      "related_asset": "LIN Interface",
+      "goal": "The LIN interface SHALL prevent unauthorized message injection and ensure the integrity of comfort-related communications.",
+      "risk_level": 3
+    },
+    {
+      "related_asset": "FlexRay Interface",
+      "goal": "The FlexRay interface SHALL ensure the integrity and availability of safety-critical FlexRay messages.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Automotive Ethernet Interface",
+      "goal": "The Automotive Ethernet interface SHALL ensure the confidentiality, integrity, and availability of transmitted and received Ethernet frames.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "CAN Networks",
+      "goal": "The CAN networks SHALL ensure the integrity and authenticity of all messages and prevent denial of service attacks.",
+      "risk_level": 5
+    },
+    {
+      "related_asset": "LIN Networks",
+      "goal": "The LIN networks SHALL prevent unauthorized message injection and ensure the integrity of comfort feature communications.",
+      "risk_level": 3
+    },
+    {
+      "related_asset": "FlexRay Networks",
+      "goal": "The FlexRay networks SHALL maintain the integrity, availability, and time-synchronization of critical communications.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Automotive Ethernet Networks",
+      "goal": "The Automotive Ethernet networks SHALL ensure the confidentiality, integrity, and availability of all network traffic and enforce network segmentation.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Gateway Routing Logic",
+      "goal": "The Gateway Routing Logic SHALL prevent unauthorized modification of routing rules and enforce secure network segmentation.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "Data Filtering / Firewall",
+      "goal": "The Data Filtering / Firewall SHALL ensure the integrity and effectiveness of its filtering rules to prevent malicious traffic and unauthorized data exfiltration.",
+      "risk_level": 4
+    },
+    {
+      "related_asset": "OTA Update Manager",
+      "goal": "The OTA Update Manager SHALL ensure the authenticity and integrity of all firmware updates and prevent their unauthorized modification or injection.",
       "risk_level": 4
     }
   ],
   "security_requirements": [
     {
-      "related_goal": "The Gateway's MCU/MPU and its software shall be protected against unauthorized code execution and malicious control.",
-      "requirement": "The Gateway MCU/MPU shall implement hardware-enforced secure boot, memory protection units (MPU/MMU), and runtime integrity monitoring.",
-      "requirement_rationale": "This directly mitigates Elevation of Privilege, Tampering, and Denial of Service by ensuring only trusted code executes at startup, isolating critical processes, and detecting unauthorized changes during operation, making it harder for an attacker to achieve arbitrary code execution."
+      "related_goal": "The MCU/MPU SHALL prevent unauthorized code execution and maintain the integrity of its firmware and sensitive data.",
+      "requirement": "The MCU/MPU SHALL implement a secure boot process to verify the authenticity and integrity of firmware before execution.",
+      "requirement_rationale": "Secure boot ensures that only trusted and unaltered firmware is loaded and executed, preventing the introduction of malicious code."
     },
     {
-      "related_goal": "The Gateway's data filtering and secure interconnection functionality shall maintain integrity and prevent unauthorized data flow between vehicle networks.",
-      "requirement": "The Gateway shall implement stateful packet inspection and cryptographic authentication for critical data packets exchanged between different network domains.",
-      "requirement_rationale": "This directly mitigates Tampering and Spoofing threats by ensuring that only valid and authenticated messages pass through the gateway, preventing malicious data injection and unauthorized access to different network segments."
+      "related_goal": "The MCU/MPU SHALL prevent unauthorized code execution and maintain the integrity of its firmware and sensitive data.",
+      "requirement": "The MCU/MPU SHALL enforce memory protection mechanisms (e.g., MPU/MMU) to prevent unauthorized access and modification of critical memory regions.",
+      "requirement_rationale": "Protects sensitive data and code from unauthorized access by other processes."
     },
     {
-      "related_goal": "The OTA firmware update mechanism shall ensure the authenticity and integrity of all firmware delivered to the Gateway and connected ECUs.",
-      "requirement": "The OTA update system shall use strong cryptographic signatures (e.g., ECC, RSA with sufficient key length) for all firmware images, with signature verification performed both on the Gateway and the target ECUs. A secure communication channel (e.g., TLS) shall be used for update delivery.",
-      "requirement_rationale": "This directly mitigates Tampering, Spoofing, and Elevation of Privilege by ensuring that only firmware from trusted sources can be installed, preventing attackers from injecting malicious updates or bricking devices. The secure channel protects against interception and modification during transit."
+      "related_goal": "The MCU/MPU SHALL prevent unauthorized code execution and maintain the integrity of its firmware and sensitive data.",
+      "requirement": "The MCU/MPU SHALL provide hardware-backed root of trust for secure storage of cryptographic keys and sensitive configuration data.",
+      "requirement_rationale": "Ensures the integrity and confidentiality of critical security parameters."
     },
     {
-      "related_goal": "The confidentiality, integrity, and authenticity of data communicated across vehicle networks (CAN, LIN, FlexRay, Ethernet) shall be protected.",
-      "requirement": "All critical safety-related and privacy-sensitive data communications on CAN, LIN, FlexRay, and Ethernet networks shall be protected with Message Authentication Codes (MACs) or encryption where confidentiality is required, and unique session keys.",
-      "requirement_rationale": "This directly mitigates Information Disclosure, Tampering, and Spoofing threats by ensuring that sensitive data cannot be easily read, altered, or impersonated by an attacker who gains access to the network."
+      "related_goal": "The PMIC's power regulation settings SHALL be protected from unauthorized manipulation and ensure stable power delivery.",
+      "requirement": "Access to PMIC configuration registers SHALL be restricted to authenticated and authorized processes only.",
+      "requirement_rationale": "Prevents malicious modification of power settings."
+    },
+    {
+      "related_goal": "The PMIC's power regulation settings SHALL be protected from unauthorized manipulation and ensure stable power delivery.",
+      "requirement": "The PMIC control interface SHALL implement command authentication and integrity checks.",
+      "requirement_rationale": "Ensures that only legitimate commands are executed by the PMIC."
+    },
+    {
+      "related_goal": "The SBC's critical communication transceivers and power supply lines SHALL operate reliably and be protected from unauthorized interference.",
+      "requirement": "The SBC's configuration and control interfaces SHALL be protected with access control mechanisms, limiting modifications to authorized entities.",
+      "requirement_rationale": "Prevents attackers from disabling or reconfiguring critical transceivers or power supply functions."
+    },
+    {
+      "related_goal": "The SBC's critical communication transceivers and power supply lines SHALL operate reliably and be protected from unauthorized interference.",
+      "requirement": "The SBC SHALL implement integrity checks on commands received from the host MCU to prevent malicious manipulation.",
+      "requirement_rationale": "Ensures that commands to the SBC are legitimate and untampered."
+    },
+    {
+      "related_goal": "The CAN transceiver SHALL ensure the integrity and authenticity of transmitted and received CAN messages.",
+      "requirement": "The CAN transceiver SHALL support filtering of invalid or malformed CAN messages.",
+      "requirement_rationale": "Reduces the attack surface by rejecting potentially malicious frames."
+    },
+    {
+      "related_goal": "The CAN transceiver SHALL ensure the integrity and authenticity of transmitted and received CAN messages.",
+      "requirement": "Access to the CAN transceiver's control registers SHALL be restricted to prevent unauthorized manipulation (e.g., forcing error-passive states).",
+      "requirement_rationale": "Prevents an attacker from intentionally disrupting CAN communication."
+    },
+    {
+      "related_goal": "The FlexRay Transceiver SHALL maintain the integrity and availability of time-triggered communication.",
+      "requirement": "The FlexRay transceiver's control interface SHALL implement robust access controls and integrity checks for commands.",
+      "requirement_rationale": "Prevents unauthorized modification of its operational parameters, crucial for time-sensitive communication."
+    },
+    {
+      "related_goal": "The FlexRay Transceiver SHALL maintain the integrity and availability of time-triggered communication.",
+      "requirement": "The FlexRay transceiver SHALL provide status feedback to the host MCU to detect and report any unexpected operational states or errors.",
+      "requirement_rationale": "Allows early detection of potential attacks or malfunctions affecting communication."
+    },
+    {
+      "related_goal": "The Ethernet PHY SHALL ensure reliable and secure data transmission and reception, preventing unauthorized disruption or manipulation.",
+      "requirement": "Access to the Ethernet PHY's Management Data Input/Output (MDIO) interface SHALL be restricted to authorized processes.",
+      "requirement_rationale": "Prevents an attacker from manipulating PHY settings to degrade or disable communication."
+    },
+    {
+      "related_goal": "The Ethernet PHY SHALL ensure reliable and secure data transmission and reception, preventing unauthorized disruption or manipulation.",
+      "requirement": "The host MCU SHALL monitor the status of the Ethernet PHY to detect unexpected operational changes or link disruptions.",
+      "requirement_rationale": "Provides early warning of potential attacks or malfunctions."
+    },
+    {
+      "related_goal": "The Ethernet switch SHALL enforce network segmentation and ensure the integrity and confidentiality of routing tables and data.",
+      "requirement": "The Ethernet switch SHALL implement secure configuration management, requiring authentication and authorization for all changes.",
+      "requirement_rationale": "Prevents unauthorized alteration of VLANs, routing rules, or QoS settings."
+    },
+    {
+      "related_goal": "The Ethernet switch SHALL enforce network segmentation and ensure the integrity and confidentiality of routing tables and data.",
+      "requirement": "The Ethernet switch SHALL support MACsec (Media Access Control Security) or similar link-layer encryption for sensitive communication paths.",
+      "requirement_rationale": "Provides confidentiality and integrity protection for data frames, preventing eavesdropping and tampering."
+    },
+    {
+      "related_goal": "The Ethernet switch SHALL enforce network segmentation and ensure the integrity and confidentiality of routing tables and data.",
+      "requirement": "The Ethernet switch SHALL implement port security mechanisms (e.g., MAC address filtering) to prevent unauthorized devices from connecting.",
+      "requirement_rationale": "Limits the ability of an attacker to introduce rogue devices into the network."
+    },
+    {
+      "related_goal": "The CAN interface SHALL prevent the injection of false messages and ensure the authenticity and integrity of legitimate messages.",
+      "requirement": "The CAN interface SHALL implement a secure on-board communication (SecOC) mechanism to provide cryptographic authentication and integrity protection for safety-critical CAN messages.",
+      "requirement_rationale": "Prevents spoofing and tampering of messages on the CAN bus."
+    },
+    {
+      "related_goal": "The CAN interface SHALL prevent the injection of false messages and ensure the authenticity and integrity of legitimate messages.",
+      "requirement": "The CAN interface SHALL apply message filtering based on sender IDs and message content rules.",
+      "requirement_rationale": "Reduces the attack surface by discarding messages from unauthorized sources or with invalid content."
+    },
+    {
+      "related_goal": "The CAN interface SHALL prevent the injection of false messages and ensure the authenticity and integrity of legitimate messages.",
+      "requirement": "The CAN interface SHALL detect and report bus-off states and other anomalies to the host MCU.",
+      "requirement_rationale": "Enables detection of denial-of-service attacks."
+    },
+    {
+      "related_goal": "The LIN interface SHALL prevent unauthorized message injection and ensure the integrity of comfort-related communications.",
+      "requirement": "The LIN master controller SHALL validate incoming LIN frames for correct checksums and message IDs.",
+      "requirement_rationale": "Detects malformed or unauthorized messages."
+    },
+    {
+      "related_goal": "The LIN interface SHALL prevent unauthorized message injection and ensure the integrity of comfort-related communications.",
+      "requirement": "The LIN master SHALL enforce timing constraints for LIN messages to detect and mitigate bus flooding attempts.",
+      "requirement_rationale": "Prevents denial-of-service attacks by detecting excessive or out-of-sequence messages."
+    },
+    {
+      "related_goal": "The FlexRay interface SHALL ensure the integrity and availability of safety-critical FlexRay messages.",
+      "requirement": "The FlexRay interface SHALL implement cryptographic integrity protection for critical FlexRay frames.",
+      "requirement_rationale": "Protects against message tampering and spoofing."
+    },
+    {
+      "related_goal": "The FlexRay interface SHALL ensure the integrity and availability of safety-critical FlexRay messages.",
+      "requirement": "The FlexRay interface SHALL strictly adhere to the time-triggered protocol to reject any frames that violate timing constraints.",
+      "requirement_rationale": "Prevents disruption of synchronized communication crucial for safety-critical functions."
+    },
+    {
+      "related_goal": "The Automotive Ethernet interface SHALL ensure the confidentiality, integrity, and availability of transmitted and received Ethernet frames.",
+      "requirement": "The Automotive Ethernet interface SHALL support MACsec for link-layer encryption and authentication.",
+      "requirement_rationale": "Provides confidentiality and integrity protection for sensitive data streams."
+    },
+    {
+      "related_goal": "The Automotive Ethernet interface SHALL ensure the confidentiality, integrity, and availability of transmitted and received Ethernet frames.",
+      "requirement": "The interface SHALL implement robust ingress and egress filtering to block unauthorized or malformed frames.",
+      "requirement_rationale": "Prevents injection of malicious traffic and ensures only legitimate data is processed."
+    },
+    {
+      "related_goal": "The CAN networks SHALL ensure the integrity and authenticity of all messages and prevent denial of service attacks.",
+      "requirement": "All ECUs connected to safety-critical CAN networks SHALL implement secure on-board communication (SecOC) for message authentication and integrity.",
+      "requirement_rationale": "Cryptographically protects messages from spoofing and tampering across the network."
+    },
+    {
+      "related_goal": "The CAN networks SHALL ensure the integrity and authenticity of all messages and prevent denial of service attacks.",
+      "requirement": "Network monitoring tools and intrusion detection systems SHALL be deployed to detect unusual traffic patterns or unauthorized messages on the CAN bus.",
+      "requirement_rationale": "Provides early warning and detection of ongoing attacks."
+    },
+    {
+      "related_goal": "The LIN networks SHALL prevent unauthorized message injection and ensure the integrity of comfort feature communications.",
+      "requirement": "LIN master ECUs SHALL validate the consistency and timing of messages received from LIN slave devices.",
+      "requirement_rationale": "Detects attempts to inject false messages or disrupt communication."
+    },
+    {
+      "related_goal": "The LIN networks SHALL prevent unauthorized message injection and ensure the integrity of comfort feature communications.",
+      "requirement": "Measures shall be implemented to prevent unauthorized physical access to LIN bus wiring.",
+      "requirement_rationale": "Reduces the risk of physical wiretapping and direct message injection."
+    },
+    {
+      "related_goal": "The FlexRay networks SHALL maintain the integrity, availability, and time-synchronization of critical communications.",
+      "requirement": "All ECUs participating in FlexRay networks SHALL implement cryptographic integrity protection for safety-critical data.",
+      "requirement_rationale": "Ensures the authenticity and integrity of messages even if the network is compromised."
+    },
+    {
+      "related_goal": "The FlexRay networks SHALL maintain the integrity, availability, and time-synchronization of critical communications.",
+      "requirement": "The FlexRay controller SHALL enforce strict adherence to the time-triggered protocol and reject any frames that do not conform to the predefined schedule.",
+      "requirement_rationale": "Prevents timing attacks and ensures deterministic communication."
+    },
+    {
+      "related_goal": "The Automotive Ethernet networks SHALL ensure the confidentiality, integrity, and availability of all network traffic and enforce network segmentation.",
+      "requirement": "All critical nodes on the Automotive Ethernet network SHALL utilize MACsec (Media Access Control Security) for link-layer encryption and authentication.",
+      "requirement_rationale": "Protects data in transit from eavesdropping and tampering."
+    },
+    {
+      "related_goal": "The Automotive Ethernet networks SHALL ensure the confidentiality, integrity, and availability of all network traffic and enforce network segmentation.",
+      "requirement": "The network architecture SHALL enforce strict VLAN segmentation to isolate different security domains.",
+      "requirement_rationale": "Prevents lateral movement of attackers and restricts access to sensitive network segments."
+    },
+    {
+      "related_goal": "The Automotive Ethernet networks SHALL ensure the confidentiality, integrity, and availability of all network traffic and enforce network segmentation.",
+      "requirement": "An in-vehicle intrusion detection system (IDS) SHALL monitor Ethernet traffic for anomalies, unauthorized protocols, or malicious patterns.",
+      "requirement_rationale": "Detects network-based attacks in real-time."
+    },
+    {
+      "related_goal": "The Gateway Routing Logic SHALL prevent unauthorized modification of routing rules and enforce secure network segmentation.",
+      "requirement": "The gateway's routing configuration SHALL be stored in protected memory and authenticated during boot.",
+      "requirement_rationale": "Ensures that only trusted routing rules are loaded and active."
+    },
+    {
+      "related_goal": "The Gateway Routing Logic SHALL prevent unauthorized modification of routing rules and enforce secure network segmentation.",
+      "requirement": "Access to modify gateway routing rules SHALL be restricted to cryptographically signed and authenticated configuration updates.",
+      "requirement_rationale": "Prevents unauthorized modification of routing behavior by attackers."
+    },
+    {
+      "related_goal": "The Gateway Routing Logic SHALL prevent unauthorized modification of routing rules and enforce secure network segmentation.",
+      "requirement": "The gateway SHALL implement robust firewall rules to enforce segmentation policies and filter traffic between domains.",
+      "requirement_rationale": "Prevents unauthorized communication between isolated networks."
+    },
+    {
+      "related_goal": "The Data Filtering / Firewall SHALL ensure the integrity and effectiveness of its filtering rules to prevent malicious traffic and unauthorized data exfiltration.",
+      "requirement": "The firewall's rule set SHALL be cryptographically signed and verified before activation.",
+      "requirement_rationale": "Ensures the integrity and authenticity of the filtering rules."
+    },
+    {
+      "related_goal": "The Data Filtering / Firewall SHALL ensure the integrity and effectiveness of its filtering rules to prevent malicious traffic and unauthorized data exfiltration.",
+      "requirement": "The firewall software SHALL be designed with a minimal attack surface and regularly audited for vulnerabilities.",
+      "requirement_rationale": "Reduces the likelihood of exploitation to bypass or disable the firewall."
+    },
+    {
+      "related_goal": "The Data Filtering / Firewall SHALL ensure the integrity and effectiveness of its filtering rules to prevent malicious traffic and unauthorized data exfiltration.",
+      "requirement": "The firewall SHALL log and alert on suspicious traffic patterns or attempts to bypass filtering rules.",
+      "requirement_rationale": "Provides detection capabilities for attacks."
+    },
+    {
+      "related_goal": "The OTA Update Manager SHALL ensure the authenticity and integrity of all firmware updates and prevent their unauthorized modification or injection.",
+      "requirement": "All OTA update packages SHALL be cryptographically signed by a trusted authority and verified by the vehicle's OTA Update Manager before installation.",
+      "requirement_rationale": "Ensures that only legitimate and untampered updates are applied."
+    },
+    {
+      "related_goal": "The OTA Update Manager SHALL ensure the authenticity and integrity of all firmware updates and prevent their unauthorized modification or injection.",
+      "requirement": "The OTA update process SHALL include robust rollback mechanisms in case of update failure or corruption.",
+      "requirement_rationale": "Prevents bricking the vehicle and allows recovery from faulty updates."
+    },
+    {
+      "related_goal": "The OTA Update Manager SHALL ensure the authenticity and integrity of all firmware updates and prevent their unauthorized modification or injection.",
+      "requirement": "The communication channel for OTA updates SHALL be secured using TLS 1.3 or equivalent cryptographic protocols.",
+      "requirement_rationale": "Protects updates in transit from eavesdropping and tampering."
     }
   ]
 }
